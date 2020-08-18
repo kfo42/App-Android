@@ -62,7 +62,7 @@ public class PairingActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pairing);
 
-        ButterKnife.bind(this);
+        bind();
 
         mContinueWithoutPairingButton.setOnClickListener(view -> {
             Intent moveToLoginIntent = new Intent(PairingActivity.this, LoginActivity.class);
