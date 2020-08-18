@@ -41,5 +41,6 @@ dependencies {
 
     implementation 'com.jakewharton:butterknife:10.2.3'
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.3'
+    implementation ('org.jitsi.react:jitsi-meet-sdk:2.+') { transitive = true }
 
 }
