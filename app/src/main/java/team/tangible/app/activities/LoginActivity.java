@@ -11,7 +11,7 @@ import team.tangible.app.R;
 public class LoginActivity extends BaseActivity {
 
     @BindView(R.id.activity_login_login_button)
-    private Button mLoginButton;
+    public Button mLoginButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
