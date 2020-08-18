@@ -6,11 +6,13 @@ import android.os.Bundle;
 
 import team.tangible.app.R;
 
-public class HomescreenActivity extends AppCompatActivity {
+public class HomescreenActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_homescreen);
+
+        bind();
     }
 }
