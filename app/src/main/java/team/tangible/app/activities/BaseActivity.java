@@ -2,6 +2,7 @@ package team.tangible.app.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ActivityManager;
 import android.view.View;
 
 import butterknife.ButterKnife;
@@ -9,6 +10,8 @@ import butterknife.ButterKnife;
 
 
 public abstract class BaseActivity extends AppCompatActivity {
+
+    private boolean mIsViewBoundWithButterKnife = false;
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -18,8 +21,20 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (!mIsViewBoundWithButterKnife) {
+            throw new RuntimeException("View is not bound. Invoke BaseActivity::bind() in onCreate()");
+        }
+    }
+
     protected void bind() {
+        if (mIsViewBoundWithButterKnife) {
+            throw new RuntimeException("View is already bound with ButterKnife");
+        }
         ButterKnife.bind(this);
+        mIsViewBoundWithButterKnife = true;
     }
 
     private void hideSystemUI() {

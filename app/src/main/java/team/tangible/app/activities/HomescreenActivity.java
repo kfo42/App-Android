@@ -35,7 +35,7 @@ public class HomescreenActivity extends JitsiMeetActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_homescreen);
-
+        
         RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.activity_homescreen);
         Context context = relativeLayout.getContext();
 
@@ -73,6 +73,7 @@ public class HomescreenActivity extends JitsiMeetActivity {
                     /* width: */ ViewGroup.LayoutParams.MATCH_PARENT,
                     /* height: */ relativeLayout.getHeight() - JITSI_CONTROLS_HEIGHT_PX));
         });
+        bind();
     }
 
 }
