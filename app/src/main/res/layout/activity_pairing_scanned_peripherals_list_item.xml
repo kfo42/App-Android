@@ -38,7 +38,7 @@
         android:layout_below="@id/text_view_device_status"
         android:gravity="center"
         android:layout_alignParentEnd="true"
-        android:text="Connect Button">
+        android:text="Pair">
     </Button>
 
 </RelativeLayout>
