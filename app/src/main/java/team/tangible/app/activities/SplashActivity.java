@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import androidx.lifecycle.MutableLiveData;
 
+import butterknife.ButterKnife;
 import io.reactivex.disposables.Disposable;
 import team.tangible.app.R;
 import team.tangible.app.utils.TangibleUtils;
@@ -35,7 +36,7 @@ public class SplashActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        bind();
+        ButterKnife.bind(this);
 
         mMainThreadHandler = new Handler(this.getMainLooper());
 
@@ -43,6 +44,7 @@ public class SplashActivity extends BaseActivity {
             String toastText = value ? "Your Tangible is ready to go!" : "Let's pair your Tangible...";
             Toast.makeText(SplashActivity.this, toastText, Toast.LENGTH_LONG).show();
 
+            // If the Tangible is paired, go to Homescreen. If not, go to Pairing
             Class<?> nextActivityClass = value ? HomescreenActivity.class : PairingActivity.class;
 
             mMainThreadHandler.postDelayed(() -> {

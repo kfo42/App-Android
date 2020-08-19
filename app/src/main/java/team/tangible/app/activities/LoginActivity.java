@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.Button;
 
 import butterknife.BindView;
+import butterknife.ButterKnife;
 import butterknife.OnClick;
 import team.tangible.app.R;
 
@@ -18,7 +19,7 @@ public class LoginActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        bind();
+        ButterKnife.bind(this);
     }
 
     @OnClick(R.id.activity_login_login_button)

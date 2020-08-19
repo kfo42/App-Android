@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Objects;
 
 import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import team.tangible.app.Configuration;
@@ -72,7 +73,7 @@ public class PairingActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pairing);
 
-        bind();
+        ButterKnife.bind(this);
 
         mContinueWithoutPairingButton.setOnClickListener(view -> {
             Intent moveToLoginIntent = new Intent(PairingActivity.this, LoginActivity.class);

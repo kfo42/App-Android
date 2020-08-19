@@ -11,30 +11,12 @@ import butterknife.ButterKnife;
 
 public abstract class BaseActivity extends AppCompatActivity {
 
-    private boolean mIsViewBoundWithButterKnife = false;
-
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus && shouldActivityBeFullscreen()) {
             hideSystemUI();
         }
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (!mIsViewBoundWithButterKnife) {
-            throw new RuntimeException("View is not bound. Invoke BaseActivity::bind() in onCreate()");
-        }
-    }
-
-    protected void bind() {
-        if (mIsViewBoundWithButterKnife) {
-            throw new RuntimeException("View is already bound with ButterKnife");
-        }
-        ButterKnife.bind(this);
-        mIsViewBoundWithButterKnife = true;
     }
 
     private void hideSystemUI() {
