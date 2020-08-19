@@ -2,6 +2,7 @@ package team.tangible.app.activities;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
@@ -39,6 +40,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import team.tangible.app.Configuration;
 import team.tangible.app.R;
+import team.tangible.app.utils.ActivityUtils;
 import team.tangible.app.utils.ArrayUtils;
 import team.tangible.app.utils.RxBleUtils;
 import team.tangible.app.utils.TangibleUtils;
@@ -46,7 +48,7 @@ import team.tangible.app.utils.TangibleUtils;
 import static team.tangible.app.Configuration.SharedPreferences.Keys.PAIRED_BLE_DEVICE_MAC_ADDRESS;
 import static team.tangible.app.Configuration.SharedPreferences.NAME;
 
-public class PairingActivity extends BaseActivity {
+public class PairingActivity extends AppCompatActivity {
 
     private static final String TAG = PairingActivity.class.getName();
     private static final int BLUETOOTH_PERMISSIONS_REQUEST_CODE = 1;
@@ -239,6 +241,15 @@ public class PairingActivity extends BaseActivity {
         public void onChanged(List<RxBleDevice> rxBleDevices) {
             discoveredPeripherals = rxBleDevices;
             notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        if (hasFocus) {
+            ActivityUtils.hideSystemUI(this);
         }
     }
 }

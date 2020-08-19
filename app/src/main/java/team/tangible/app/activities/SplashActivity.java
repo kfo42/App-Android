@@ -6,14 +6,16 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.MutableLiveData;
 
 import butterknife.ButterKnife;
 import io.reactivex.disposables.Disposable;
 import team.tangible.app.R;
+import team.tangible.app.utils.ActivityUtils;
 import team.tangible.app.utils.TangibleUtils;
 
-public class SplashActivity extends BaseActivity {
+public class SplashActivity extends AppCompatActivity {
 
     private static final String TAG = SplashActivity.class.getName();
 
@@ -72,6 +74,15 @@ public class SplashActivity extends BaseActivity {
         if (mSubscriptionDisposable != null) {
             mSubscriptionDisposable.dispose();
             mSubscriptionDisposable = null;
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        if (hasFocus) {
+            ActivityUtils.hideSystemUI(this);
         }
     }
 }
