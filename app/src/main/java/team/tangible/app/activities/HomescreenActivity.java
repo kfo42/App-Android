@@ -73,7 +73,6 @@ public class HomescreenActivity extends JitsiMeetActivity {
                     /* width: */ ViewGroup.LayoutParams.MATCH_PARENT,
                     /* height: */ relativeLayout.getHeight() - JITSI_CONTROLS_HEIGHT_PX));
         });
-        bind();
     }
 
 }
