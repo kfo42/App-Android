@@ -9,4 +9,7 @@
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
+    <string name="no_bluetooth_devices_found_searching">No Bluetooth devices found. Searching...</string>
+    <string name="bluetooth_devices_found">Found %d Bluetooth device(s)</string>
+    <string name="failed_to_save_bluetooth_mac_address">Failed to save Bluetooth MAC address</string>
 </resources>
