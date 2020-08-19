@@ -1,0 +1,21 @@
+name: Android APK Build Push
+
+on: [ push ]
+
+jobs:
+  apk:
+    name: Generate APK
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build Release APK
+        run: ./gradlew assemble --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v1
+        with:
+          name: app
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
