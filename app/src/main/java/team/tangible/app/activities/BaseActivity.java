@@ -7,6 +7,8 @@ import android.view.View;
 
 import butterknife.ButterKnife;
 
+
+
 public abstract class BaseActivity extends AppCompatActivity {
 
     private boolean mIsViewBoundWithButterKnife = false;
