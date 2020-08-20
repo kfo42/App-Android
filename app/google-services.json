@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "439366137624",
+    "firebase_url": "https://tangible-app-beta.firebaseio.com",
+    "project_id": "tangible-app-beta",
+    "storage_bucket": "tangible-app-beta.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:439366137624:android:2bfcc3dc5efe56424ad06d",
+        "android_client_info": {
+          "package_name": "team.tangible.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "439366137624-lf2vg72egkn5m14i0uisf1t5g4i2je7e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "team.tangible.app",
+            "certificate_hash": "4bbc0587c31344236fdaa35c823ffbb004954925"
+          }
+        },
+        {
+          "client_id": "439366137624-uqo29saisfe6d823rrrqjutif36871ld.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChom45W_D6fEDNNTvFYuwI6z7z3ffe2T0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "439366137624-uqo29saisfe6d823rrrqjutif36871ld.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
