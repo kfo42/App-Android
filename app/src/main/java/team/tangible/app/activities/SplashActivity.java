@@ -6,13 +6,16 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.MutableLiveData;
 
+import butterknife.ButterKnife;
 import io.reactivex.disposables.Disposable;
 import team.tangible.app.R;
+import team.tangible.app.utils.ActivityUtils;
 import team.tangible.app.utils.TangibleUtils;
 
-public class SplashActivity extends BaseActivity {
+public class SplashActivity extends AppCompatActivity {
 
     private static final String TAG = SplashActivity.class.getName();
 
@@ -35,7 +38,7 @@ public class SplashActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        bind();
+        ButterKnife.bind(this);
 
         mMainThreadHandler = new Handler(this.getMainLooper());
 
@@ -43,6 +46,7 @@ public class SplashActivity extends BaseActivity {
             String toastText = value ? "Your Tangible is ready to go!" : "Let's pair your Tangible...";
             Toast.makeText(SplashActivity.this, toastText, Toast.LENGTH_LONG).show();
 
+            // If the Tangible is paired, go to Homescreen. If not, go to Pairing
             Class<?> nextActivityClass = value ? HomescreenActivity.class : PairingActivity.class;
 
             mMainThreadHandler.postDelayed(() -> {
@@ -70,6 +74,15 @@ public class SplashActivity extends BaseActivity {
         if (mSubscriptionDisposable != null) {
             mSubscriptionDisposable.dispose();
             mSubscriptionDisposable = null;
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        if (hasFocus) {
+            ActivityUtils.hideSystemUI(this);
         }
     }
 }

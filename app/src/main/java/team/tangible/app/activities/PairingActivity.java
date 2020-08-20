@@ -2,6 +2,7 @@ package team.tangible.app.activities;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
@@ -12,7 +13,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -22,9 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.polidea.rxandroidble2.RxBleClient;
-import com.polidea.rxandroidble2.RxBleConnection;
 import com.polidea.rxandroidble2.RxBleDevice;
-import com.polidea.rxandroidble2.exceptions.BleDisconnectedException;
 import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.scan.ScanSettings;
 
@@ -34,18 +32,19 @@ import java.util.List;
 import java.util.Objects;
 
 import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
-import team.tangible.app.Configuration;
+import team.tangible.app.Constants;
 import team.tangible.app.R;
+import team.tangible.app.utils.ActivityUtils;
 import team.tangible.app.utils.ArrayUtils;
 import team.tangible.app.utils.RxBleUtils;
 import team.tangible.app.utils.TangibleUtils;
 
-import static team.tangible.app.Configuration.SharedPreferences.Keys.PAIRED_BLE_DEVICE_MAC_ADDRESS;
-import static team.tangible.app.Configuration.SharedPreferences.NAME;
+import static team.tangible.app.Constants.SharedPreferences.Keys.PAIRED_BLE_DEVICE_MAC_ADDRESS;
+import static team.tangible.app.Constants.SharedPreferences.NAME;
 
-public class PairingActivity extends BaseActivity {
+public class PairingActivity extends AppCompatActivity {
 
     private static final String TAG = PairingActivity.class.getName();
     private static final int BLUETOOTH_PERMISSIONS_REQUEST_CODE = 1;
@@ -72,7 +71,7 @@ public class PairingActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pairing);
 
-        bind();
+        ButterKnife.bind(this);
 
         mContinueWithoutPairingButton.setOnClickListener(view -> {
             Intent moveToLoginIntent = new Intent(PairingActivity.this, LoginActivity.class);
@@ -95,7 +94,7 @@ public class PairingActivity extends BaseActivity {
         if (!mRxBleClient.isScanRuntimePermissionGranted()) {
             String[] rxBleClientPermissions = mRxBleClient.getRecommendedScanRuntimePermissions();
             // Merge the permissions from the client and from what we'd like
-            String[] permissionsToRequest = ArrayUtils.joinDistinct(rxBleClientPermissions, Configuration.RequiredPermissions.BLUETOOTH_LOW_ENERGY);
+            String[] permissionsToRequest = ArrayUtils.joinDistinct(rxBleClientPermissions, Constants.RequiredPermissions.BLUETOOTH_LOW_ENERGY);
             this.requestPermissions(permissionsToRequest, BLUETOOTH_PERMISSIONS_REQUEST_CODE);
         } else {
             onAllPermissionsGranted();
@@ -238,6 +237,15 @@ public class PairingActivity extends BaseActivity {
         public void onChanged(List<RxBleDevice> rxBleDevices) {
             discoveredPeripherals = rxBleDevices;
             notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        if (hasFocus) {
+            ActivityUtils.hideSystemUI(this);
         }
     }
 }

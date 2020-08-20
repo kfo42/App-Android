@@ -16,12 +16,12 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
 import team.tangible.app.R;
+import team.tangible.app.utils.ActivityUtils;
 import team.tangible.app.utils.URLUtils;
 
 import org.jitsi.meet.sdk.JitsiMeetActivity;
 import org.jitsi.meet.sdk.JitsiMeetConferenceOptions;
 import org.jitsi.meet.sdk.JitsiMeetView;
-import org.jitsi.meet.sdk.JitsiMeetActivity;
 
 
 public class HomescreenActivity extends JitsiMeetActivity {
@@ -36,7 +36,7 @@ public class HomescreenActivity extends JitsiMeetActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_homescreen);
         
-        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.activity_homescreen);
+        RelativeLayout relativeLayout = findViewById(R.id.activity_homescreen);
         Context context = relativeLayout.getContext();
 
         relativeLayout.addView(mFrameLayout = new FrameLayout(context) {{
@@ -75,4 +75,12 @@ public class HomescreenActivity extends JitsiMeetActivity {
         });
     }
 
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        if (hasFocus) {
+            ActivityUtils.hideSystemUI(this);
+        }
+    }
 }
