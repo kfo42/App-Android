@@ -89,7 +89,15 @@ public class PairingActivity extends AppCompatActivity {
 
         mScannedPeripheralsListView.setAdapter(mScannedPeripheralsAdapter);
 
-        // We want to block here so we know if we have a result or not
+        mRxBleClient = RxBleClient.create(PairingActivity.this);
+
+        mRxBleDevicesLiveData.observe(PairingActivity.this, mScannedPeripheralsAdapter);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
         mConnectionCheckingSubscription = TangibleUtils.getTangibleBleConnection(PairingActivity.this).subscribe(rxBleConnection -> {
             Timber.i("BLE device + connection available for already paired device");
             Intent moveToLoginIntent = new Intent(PairingActivity.this, HomescreenActivity.class);
@@ -98,8 +106,6 @@ public class PairingActivity extends AppCompatActivity {
         }, throwable -> {
             // throw new RuntimeException(throwable);
         });
-
-        mRxBleClient = RxBleClient.create(PairingActivity.this);
 
         if (!mRxBleClient.isScanRuntimePermissionGranted()) {
             String[] rxBleClientPermissions = mRxBleClient.getRecommendedScanRuntimePermissions();
@@ -117,8 +123,6 @@ public class PairingActivity extends AppCompatActivity {
                 mStatusTextView.setText(getResources().getString(R.string.bluetooth_devices_found, rxBleDevices.size()));
             }
         });
-
-        mRxBleDevicesLiveData.observe(PairingActivity.this, mScannedPeripheralsAdapter);
     }
 
     @Override

@@ -53,6 +53,11 @@ public class SplashActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         mMainThreadHandler = new Handler(this.getMainLooper());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
 
         mIsUserPairedWithTangibleLiveData.observeForever(kIsUserPairedWithTangibleObserver);
 
