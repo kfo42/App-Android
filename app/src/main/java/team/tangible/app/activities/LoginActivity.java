@@ -29,6 +29,7 @@ public class LoginActivity extends AppCompatActivity {
     public void onLoginButtonClicked() {
         Intent moveToHomeScreenIntent = new Intent(LoginActivity.this, HomescreenActivity.class);
         startActivity(moveToHomeScreenIntent);
+        this.finish();
     }
 
     @Override

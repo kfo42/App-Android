@@ -12,7 +12,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Handler;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -21,6 +21,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.polidea.rxandroidble2.RxBleClient;
 import com.polidea.rxandroidble2.RxBleDevice;
 import com.polidea.rxandroidble2.scan.ScanResult;
@@ -40,9 +41,13 @@ import team.tangible.app.utils.ActivityUtils;
 import team.tangible.app.utils.ArrayUtils;
 import team.tangible.app.utils.RxBleUtils;
 import team.tangible.app.utils.TangibleUtils;
+import timber.log.Timber;
 
-import static team.tangible.app.Constants.SharedPreferences.Keys.PAIRED_BLE_DEVICE_MAC_ADDRESS;
+import static co.apptailor.googlesignin.RNGoogleSigninModule.RC_SIGN_IN;
+import static team.tangible.app.Constants.Firebase.Authentication.FIREBASE_AUTH_UI_INTENT;
 import static team.tangible.app.Constants.SharedPreferences.NAME;
+import static team.tangible.app.Constants.Toast.TOAST_LENGTH_LONG_MS;
+import static team.tangible.app.Constants.SharedPreferences.Keys;
 
 public class PairingActivity extends AppCompatActivity {
 
@@ -65,6 +70,8 @@ public class PairingActivity extends AppCompatActivity {
     private MutableLiveData<List<RxBleDevice>> mRxBleDevicesLiveData = new MutableLiveData<List<RxBleDevice>>() {{
         setValue(new ArrayList<>());
     }};
+    private Handler mMainThreadHandler;
+    private Disposable mConnectionCheckingSubscription;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +79,8 @@ public class PairingActivity extends AppCompatActivity {
         setContentView(R.layout.activity_pairing);
 
         ButterKnife.bind(this);
+
+        mMainThreadHandler = new Handler(this.getMainLooper());
 
         mContinueWithoutPairingButton.setOnClickListener(view -> {
             Intent moveToLoginIntent = new Intent(PairingActivity.this, LoginActivity.class);
@@ -81,10 +90,11 @@ public class PairingActivity extends AppCompatActivity {
         mScannedPeripheralsListView.setAdapter(mScannedPeripheralsAdapter);
 
         // We want to block here so we know if we have a result or not
-        TangibleUtils.getTangibleBleConnection(PairingActivity.this).subscribe(rxBleConnection -> {
-            Log.i(TAG, "BLE device + connection available for already paired device");
-            Intent moveToLoginIntent = new Intent(PairingActivity.this, LoginActivity.class);
+        mConnectionCheckingSubscription = TangibleUtils.getTangibleBleConnection(PairingActivity.this).subscribe(rxBleConnection -> {
+            Timber.i("BLE device + connection available for already paired device");
+            Intent moveToLoginIntent = new Intent(PairingActivity.this, HomescreenActivity.class);
             PairingActivity.this.startActivity(moveToLoginIntent);
+            PairingActivity.this.finish();
         }, throwable -> {
             // throw new RuntimeException(throwable);
         });
@@ -127,7 +137,7 @@ public class PairingActivity extends AppCompatActivity {
     }
 
     private void onAllPermissionsGranted() {
-        Log.i(TAG, "All required permissions were granted, starting BLE scan");
+        Timber.i("All required permissions were granted, starting BLE scan");
         startBleDeviceScan();
     }
 
@@ -143,27 +153,32 @@ public class PairingActivity extends AppCompatActivity {
                                 if (!devicesList.contains(bleDevice)) {
                                     devicesList.add(bleDevice);
                                     mRxBleDevicesLiveData.setValue(devicesList);
-                                    Log.i(TAG, "Added BLE Device to live data: " + bleDevice.getName());
+                                    Timber.i("Added BLE Device to live data: %s", bleDevice.getName());
                                 } else {
-                                    Log.d(TAG, "BLE Device already in live data: " + bleDevice.getName());
+                                    Timber.d("BLE Device already in live data: %s", bleDevice.getName());
                                 }
 
                             }
                         },
                         (Throwable throwable) -> {
                             // Handle an error here.
-                            Log.e(TAG, throwable.toString());
+                            Timber.e(throwable);
                         }
                 );
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onStop() {
+        super.onStop();
 
         if (mScanSubscription != null) {
             mScanSubscription.dispose();
             mScanSubscription = null;
+        }
+
+        if (mConnectionCheckingSubscription != null) {
+            mConnectionCheckingSubscription.dispose();
+            mConnectionCheckingSubscription = null;
         }
     }
 
@@ -201,31 +216,14 @@ public class PairingActivity extends AppCompatActivity {
             ((TextView) convertView.findViewById(R.id.text_view_device_name)).setText(bleDevice.getName());
             ((TextView) convertView.findViewById(R.id.text_view_device_address)).setText(bleDevice.getMacAddress());
             ((TextView) convertView.findViewById(R.id.text_view_device_status)).setText(RxBleUtils.getConnectionStateString(bleDevice.getConnectionState()));
-            ((Button) convertView.findViewById(R.id.button_connect)).setOnClickListener((View.OnClickListener) (View v) -> {
+            ((Button) convertView.findViewById(R.id.button_connect)).setOnClickListener((View v) -> {
                 new AlertDialog.Builder(PairingActivity.this)
                         .setTitle("Confirm Tangible pairing")
                         .setMessage("Is this device your Tangible?\n" + bleDevice.getName())
                         .setCancelable(false)
                         .setNegativeButton("Cancel", null)
-                        .setPositiveButton("Confirm pairing", (DialogInterface dialog, int which) -> {
-                            dialog.dismiss();
-                            SharedPreferences sharedPreferences = PairingActivity.this.getSharedPreferences(NAME, Context.MODE_PRIVATE);
-                            SharedPreferences.Editor sharedPreferencesEditor = sharedPreferences.edit();
-                            sharedPreferencesEditor.putString(PAIRED_BLE_DEVICE_MAC_ADDRESS, bleDevice.getMacAddress());
-                            if (!sharedPreferencesEditor.commit()) {
-                                dialog.cancel();
-                                runOnUiThread(() -> {
-                                    Log.e(TAG, getResources().getString(R.string.failed_to_save_bluetooth_mac_address));
-                                    mStatusTextView.setText(R.string.failed_to_save_bluetooth_mac_address);
-                                });
-                                return;
-                            };
-
-                            Intent intent = new Intent(PairingActivity.this, LoginActivity.class);
-                            PairingActivity.this.startActivity(intent);
-
-                            Toast.makeText(PairingActivity.this, "Paired with " + bleDevice.getName(), Toast.LENGTH_LONG).show();
-                        })
+                        .setPositiveButton("Confirm pairing",
+                                new PositiveButtonConfirmPairingOnClickListener(bleDevice))
                         .create()
                         .show();
             });
@@ -237,6 +235,81 @@ public class PairingActivity extends AppCompatActivity {
         public void onChanged(List<RxBleDevice> rxBleDevices) {
             discoveredPeripherals = rxBleDevices;
             notifyDataSetChanged();
+        }
+    }
+
+    private class PositiveButtonConfirmPairingOnClickListener implements DialogInterface.OnClickListener {
+        private RxBleDevice mRxBleDevice;
+
+        public PositiveButtonConfirmPairingOnClickListener(RxBleDevice rxBleDevice) {
+            this.mRxBleDevice = rxBleDevice;
+        }
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            dialog.dismiss();
+
+            Toast.makeText(PairingActivity.this, "Paired with " + mRxBleDevice.getName(), Toast.LENGTH_LONG).show();
+
+            SharedPreferences sharedPreferences = PairingActivity.this.getSharedPreferences(NAME, Context.MODE_PRIVATE);
+            SharedPreferences.Editor sharedPreferencesEditor = sharedPreferences.edit();
+            sharedPreferencesEditor.putString(Keys.PAIRED_BLE_DEVICE_MAC_ADDRESS, mRxBleDevice.getMacAddress());
+
+            if (!sharedPreferencesEditor.commit()) {
+                // If the saving to SharedPreferences failed...
+
+                Timber.e("Failed to save MAC address %s to %s", mRxBleDevice.getMacAddress(), SharedPreferences.class.getSimpleName());
+
+                dialog.cancel();
+
+                runOnUiThread(() -> {
+
+                    Timber.e(getResources().getString(R.string.failed_to_save_bluetooth_mac_address));
+                    mStatusTextView.setText(R.string.failed_to_save_bluetooth_mac_address);
+
+                    new AlertDialog.Builder(PairingActivity.this)
+                            .setTitle("Failed to pair to Bluetooth device")
+                            .setMessage(mRxBleDevice.getName())
+                            .setCancelable(false)
+                            .setPositiveButton("Try again...", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            })
+                            .create()
+                            .show();
+
+                });
+
+                return;
+            }
+
+            boolean isUserLoggedIn = FirebaseAuth.getInstance().getCurrentUser() != null;
+
+            if (isUserLoggedIn) {
+                // Then move to the Homescreen! We're done with all the setup
+                Intent intent = new Intent(PairingActivity.this, HomescreenActivity.class);
+                PairingActivity.this.startActivity(intent);
+                PairingActivity.this.finish();
+
+            } else {
+                // User isn't logged in so
+
+                Timber.w("User is not logged in. Moving to Firebase Auth UI");
+
+                // If they are not signed in (the user is null), then start the sign in UI
+                mMainThreadHandler.postDelayed(() -> {
+
+                    Toast.makeText(PairingActivity.this, "Let's get you signed in...", Toast.LENGTH_LONG).show();
+
+                    // Create and launch sign-in intent
+                    startActivityForResult(FIREBASE_AUTH_UI_INTENT, RC_SIGN_IN);
+
+                }, TOAST_LENGTH_LONG_MS);
+
+            }
+
         }
     }
 
