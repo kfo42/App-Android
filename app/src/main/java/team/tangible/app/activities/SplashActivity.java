@@ -3,6 +3,7 @@ package team.tangible.app.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -126,6 +127,8 @@ public class SplashActivity extends AppCompatActivity {
         @Override
         public void onChanged(Boolean value) {
             Lifecycle.State state = SplashActivity.this.getLifecycle().getCurrentState();
+
+            Timber.tag("LIFECYCLE DEBUG").d("Reached lifecycle point %s with boolean value %s", state, value);
 
             if (state == Lifecycle.State.INITIALIZED || state == Lifecycle.State.STARTED) {
                 return;

@@ -83,7 +83,7 @@ public class PairingActivity extends AppCompatActivity {
         mMainThreadHandler = new Handler(this.getMainLooper());
 
         mContinueWithoutPairingButton.setOnClickListener(view -> {
-            Intent moveToLoginIntent = new Intent(PairingActivity.this, LoginActivity.class);
+            Intent moveToLoginIntent = new Intent(PairingActivity.this, HomescreenActivity.class);
             startActivity(moveToLoginIntent);
         });
 
