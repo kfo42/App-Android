@@ -16,7 +16,7 @@ import io.reactivex.disposables.Disposable;
 import timber.log.Timber;
 
 public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestureListener {
-    private DisplayMetrics mDisplayMetrics = new DisplayMetrics();
+    private DisplayMetrics mDisplayMetrics;
     float width = mDisplayMetrics.widthPixels;
     float height = mDisplayMetrics.heightPixels;
     private OnInteractionListener mOnInteractionListener;
@@ -70,6 +70,8 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
     }
 
     public SocialTouchInteractionService(Context context) {
+        mDisplayMetrics = new DisplayMetrics();
+
         ((WindowManager) Objects.requireNonNull(context.getSystemService(Context.WINDOW_SERVICE)))
                 .getDefaultDisplay().getMetrics(mDisplayMetrics);
     }
@@ -132,6 +134,7 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
 
     @Override
     public boolean onDoubleTap(MotionEvent e) {
+        Log.i("TAG", "onDoubleTap: ");
         float x = e.getX();
         float y = e.getY();
         Actuator actuator = getActuator(x, y);
@@ -159,6 +162,7 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
 
     @Override
     public void onLongPress(MotionEvent e) {
+        Log.i("TAG", "onLongPress: ");
         float x = e.getX();
         float y = e.getY();
         Actuator actuator = getActuator(x, y);
