@@ -35,12 +35,7 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
         }
 
         public String getBleCode() {
-            return "!" + mBleCode;
-        }
-
-        public byte[] getBleCodeBytesWithCrc() {
-            byte[] bytes = getBleCode().getBytes();
-            return TangibleBleConnectionService.appendCrc(bytes);
+            return mBleCode;
         }
     }
 
