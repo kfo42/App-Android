@@ -39,8 +39,8 @@ import team.tangible.app.BuildConfig;
 import team.tangible.app.Constants;
 import team.tangible.app.R;
 import team.tangible.app.TangibleApplication;
-import team.tangible.app.models.LoginResult;
-import team.tangible.app.models.TangibleAvailabilityResult;
+import team.tangible.app.results.LoginResult;
+import team.tangible.app.results.TangibleAvailabilityResult;
 import team.tangible.app.services.AuthenticationService;
 import team.tangible.app.services.TangibleBleConnectionService;
 import team.tangible.app.utils.ActivityUtils;
@@ -112,13 +112,7 @@ public class PairingActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        mDisposables.add(mTangibleBleConnectionService.isTangibleAvailable().subscribe(tangibleAvailabilityResult -> {
-            if (tangibleAvailabilityResult == TangibleAvailabilityResult.AVAILABLE) {
-                Timber.i("BLE device + connection available for already paired device");
-                startActivity(new Intent(PairingActivity.this, HomescreenActivity.class));
-                finish();
-            }
-        }));
+        mDisposables = new CompositeDisposable();
 
         if (!mTangibleBleConnectionService.areRuntimePermissionsGranted()) {
             String[] rxBleClientPermissions = mTangibleBleConnectionService.getRuntimePermissions();
@@ -155,6 +149,15 @@ public class PairingActivity extends AppCompatActivity {
 
     private void onAllPermissionsGranted() {
         Timber.i("All required permissions were granted, starting BLE scan");
+
+        mDisposables.add(mTangibleBleConnectionService.isTangibleAvailable().subscribe(tangibleAvailabilityResult -> {
+            if (tangibleAvailabilityResult == TangibleAvailabilityResult.AVAILABLE) {
+                Timber.i("BLE device + connection available for already paired device");
+                startActivity(new Intent(PairingActivity.this, HomescreenActivity.class));
+                finish();
+            }
+        }));
+
         startBleDeviceScan();
     }
 

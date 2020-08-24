@@ -1,35 +1,60 @@
 package team.tangible.app.activities;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GestureDetectorCompat;
+import androidx.lifecycle.MutableLiveData;
 
-import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Context;
 import android.gesture.GestureOverlayView;
 import android.os.Bundle;
-import android.view.LayoutInflater;
+import android.os.Handler;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
+import com.polidea.rxandroidble2.RxBleConnection;
+
+import io.reactivex.disposables.CompositeDisposable;
+import team.tangible.app.Constants;
 import team.tangible.app.R;
+import team.tangible.app.TangibleApplication;
+import team.tangible.app.services.SocialTouchInteractionService;
+import team.tangible.app.services.TangibleBleConnectionService;
 import team.tangible.app.utils.ActivityUtils;
 import team.tangible.app.utils.URLUtils;
+import timber.log.Timber;
 
 import org.jitsi.meet.sdk.JitsiMeetActivity;
 import org.jitsi.meet.sdk.JitsiMeetConferenceOptions;
 import org.jitsi.meet.sdk.JitsiMeetView;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 
-public class HomescreenActivity extends JitsiMeetActivity {
+import static team.tangible.app.Constants.BluetoothLowEnergy.NordicUARTService.*;
+
+
+public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouchListener, SocialTouchInteractionService.OnInteractionListener {
 
     private JitsiMeetView mJitsiMeetView;
     private static final int JITSI_CONTROLS_HEIGHT_PX = 600;
     private FrameLayout mFrameLayout;
     private GestureOverlayView mGestureOverlayView;
+    private GestureDetectorCompat mDetector;
+
+    CompositeDisposable mDisposables;
+    MutableLiveData<RxBleConnection> mRxBleConnectionLiveData = new MutableLiveData<>();
+
+    @Inject
+    SocialTouchInteractionService mSocialTouchInteractionService;
+
+    @Inject
+    TangibleBleConnectionService mTangibleBleConnectionService;
+
+    @Inject
+    @Named(Constants.Threading.MAIN_THREAD)
+    Handler mMainThreadHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +63,8 @@ public class HomescreenActivity extends JitsiMeetActivity {
         
         RelativeLayout relativeLayout = findViewById(R.id.activity_homescreen);
         Context context = relativeLayout.getContext();
+
+        ((TangibleApplication) getApplication()).getApplicationComponent().inject(this);
 
         relativeLayout.addView(mFrameLayout = new FrameLayout(context) {{
             setId(View.generateViewId());
@@ -60,6 +87,7 @@ public class HomescreenActivity extends JitsiMeetActivity {
                 setOrientation(ORIENTATION_VERTICAL);
                 setUncertainGestureColor(context.getColor(R.color.design_default_color_primary));
                 setGestureColor(context.getColor(R.color.design_default_color_secondary));
+                setOnTouchListener(HomescreenActivity.this);
             }});
         }});
 
@@ -73,6 +101,34 @@ public class HomescreenActivity extends JitsiMeetActivity {
                     /* width: */ ViewGroup.LayoutParams.MATCH_PARENT,
                     /* height: */ relativeLayout.getHeight() - JITSI_CONTROLS_HEIGHT_PX));
         });
+
+        mDetector = new GestureDetectorCompat(this, mSocialTouchInteractionService);
+        mDetector.setOnDoubleTapListener(mSocialTouchInteractionService);
+
+        mSocialTouchInteractionService.setOnInteractionListener(this);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        mDisposables = new CompositeDisposable();
+
+        mDisposables.add(mTangibleBleConnectionService.getConnection().subscribe(rxBleConnection -> {
+            mMainThreadHandler.post(() -> mRxBleConnectionLiveData.setValue(rxBleConnection));
+        }, throwable -> {
+            Timber.e(throwable);
+        }));
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if (mDisposables != null) {
+            mDisposables.dispose();
+            mDisposables = null;
+        }
     }
 
     @Override
@@ -82,5 +138,31 @@ public class HomescreenActivity extends JitsiMeetActivity {
         if (hasFocus) {
             ActivityUtils.hideSystemUI(this);
         }
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        return this.mDetector.onTouchEvent(event);
+    }
+
+    @Override
+    public void onInteraction(SocialTouchInteractionService.Interaction interaction) {
+        Timber.i(interaction.getBleCode());
+
+        mMainThreadHandler.post(() -> {
+            RxBleConnection bleConnection = mRxBleConnectionLiveData.getValue();
+            if (bleConnection == null) {
+                return;
+            }
+
+            byte[] message = mTangibleBleConnectionService.getTangibleInteractionMessageWithCrc(interaction);
+
+            mDisposables.add(bleConnection.writeCharacteristic(Characteristics.RX, message).subscribe(result -> {
+                Timber.i(new String(result));
+            }, throwable -> {
+                throwable.printStackTrace();
+                Timber.e(throwable);
+            }));
+        });
     }
 }

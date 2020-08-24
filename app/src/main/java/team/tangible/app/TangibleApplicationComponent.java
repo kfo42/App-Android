@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 
 import dagger.BindsInstance;
 import dagger.Component;
+import team.tangible.app.activities.HomescreenActivity;
 import team.tangible.app.activities.PairingActivity;
 import team.tangible.app.activities.SplashActivity;
 import team.tangible.app.services.AuthenticationService;
@@ -26,6 +27,7 @@ public interface TangibleApplicationComponent {
     // satisfy all the dependencies of the fields that LoginActivity is injecting.
     void inject(SplashActivity splashActivity);
     void inject(PairingActivity pairingActivity);
+    void inject(HomescreenActivity homescreenActivity);
 
     /**
      * This is a custom builder that provides the Context object used as dependencies in the

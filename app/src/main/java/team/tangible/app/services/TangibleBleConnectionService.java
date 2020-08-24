@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import team.tangible.app.Constants;
-import team.tangible.app.models.TangibleAvailabilityResult;
+import team.tangible.app.results.TangibleAvailabilityResult;
 import timber.log.Timber;
 
-import static team.tangible.app.models.TangibleAvailabilityResult.*;
+import static team.tangible.app.results.TangibleAvailabilityResult.*;
 
 public class TangibleBleConnectionService {
     private static final long AVAILABILITY_TIMEOUT_MS = 5000;
@@ -82,10 +82,33 @@ public class TangibleBleConnectionService {
         }
 
         String savedMacAddress = getSavedMacAddress();
-        return mRxBleClient.getBleDevice(savedMacAddress).establishConnection(false);
+        return mRxBleClient.getBleDevice(savedMacAddress).establishConnection(true);
     }
 
     public static class NoPairedTangibleException extends Error {}
 
     public static class RuntimePermissionsNotGranted extends Error {}
+
+    public byte[] getTangibleInteractionMessageWithCrc(SocialTouchInteractionService.Interaction interaction) {
+        return appendCrc(("!" + interaction.getBleCode()).getBytes());
+    }
+
+    /**
+     * Source: https://github.com/ZoneTangible/Bluefruit_LE_Connect_Android_V2/blob/97cb02e1b5d8c90e7ab1bf68548afbeb39ba5096/app/src/main/java/com/adafruit/bluefruit/le/connect/ble/central/BlePeripheralUart.java#L261-L275
+     */
+    private byte[] appendCrc(byte[] data) {
+        // Calculate checksum
+        byte checksum = 0;
+        for (byte aData : data) {
+            checksum += aData;
+        }
+        checksum = (byte) (~checksum);       // Invert
+
+        // Add crc to data
+        byte[] dataCrc = new byte[data.length + 1];
+        System.arraycopy(data, 0, dataCrc, 0, data.length);
+        dataCrc[data.length] = checksum;
+
+        return dataCrc;
+    }
 }

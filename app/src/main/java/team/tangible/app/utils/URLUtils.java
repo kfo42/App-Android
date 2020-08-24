@@ -6,14 +6,14 @@ import androidx.annotation.NonNull;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class URLUtils {
-    private static final String TAG = URLUtils.class.getName();
+import timber.log.Timber;
 
+public class URLUtils {
     public static URL parse(@NonNull String url) {
         try {
             return new URL(url);
         } catch (MalformedURLException e) {
-            Log.e(TAG, "Failed to parse URL from string " + url, e);
+            Timber.e(e, "Failed to parse URL from string %s", url);
             e.printStackTrace();
             return null;
         }

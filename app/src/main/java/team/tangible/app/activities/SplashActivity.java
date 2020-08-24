@@ -21,8 +21,8 @@ import team.tangible.app.BuildConfig;
 import team.tangible.app.Constants;
 import team.tangible.app.R;
 import team.tangible.app.TangibleApplication;
-import team.tangible.app.models.LoginResult;
-import team.tangible.app.models.TangibleAvailabilityResult;
+import team.tangible.app.results.LoginResult;
+import team.tangible.app.results.TangibleAvailabilityResult;
 import team.tangible.app.services.AuthenticationService;
 import team.tangible.app.services.TangibleBleConnectionService;
 import team.tangible.app.utils.ActivityUtils;
@@ -78,6 +78,10 @@ public class SplashActivity extends AppCompatActivity {
         // Check if the Tangible is available
         mDisposables.add(mTangibleBleConnectionService.isTangibleAvailable().subscribe(result -> {
             mMainThreadHandler.post(() -> mIsUserPairedWithTangibleLiveData.setValue(result));
+        }, throwable -> {
+            if (throwable instanceof TangibleBleConnectionService.RuntimePermissionsNotGranted) {
+                moveTo(PairingActivity.class);
+            }
         }));
 
         // Check if the user is logged in
