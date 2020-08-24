@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import team.tangible.app.Constants;
-import team.tangible.app.models.TangibleAvailabilityResult;
+import team.tangible.app.results.TangibleAvailabilityResult;
 import timber.log.Timber;
 
-import static team.tangible.app.models.TangibleAvailabilityResult.*;
+import static team.tangible.app.results.TangibleAvailabilityResult.*;
 
 public class TangibleBleConnectionService {
     private static final long AVAILABILITY_TIMEOUT_MS = 5000;

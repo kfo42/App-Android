@@ -3,9 +3,9 @@ package team.tangible.app.services;
 import com.google.firebase.auth.FirebaseAuth;
 
 import io.reactivex.Single;
-import team.tangible.app.models.LoginResult;
+import team.tangible.app.results.LoginResult;
 
-import static team.tangible.app.models.LoginResult.*;
+import static team.tangible.app.results.LoginResult.*;
 
 public class AuthenticationService {
     private final FirebaseAuth mFirebaseAuth;
