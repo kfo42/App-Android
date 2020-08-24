@@ -32,6 +32,8 @@ import org.jitsi.meet.sdk.JitsiMeetView;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import static team.tangible.app.Constants.BluetoothLowEnergy.NordicUARTService.*;
+
 
 public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouchListener, SocialTouchInteractionService.OnInteractionListener {
 
@@ -153,7 +155,9 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
                 return;
             }
 
-            mDisposables.add(bleConnection.writeCharacteristic(Constants.BluetoothLowEnergy.NordicUARTService.Characteristics.RX, interaction.getBleCodeBytesWithCrc()).subscribe(result -> {
+            byte[] message = mTangibleBleConnectionService.getTangibleInteractionMessageWithCrc(interaction);
+
+            mDisposables.add(bleConnection.writeCharacteristic(Characteristics.RX, message).subscribe(result -> {
                 Timber.i(new String(result));
             }, throwable -> {
                 throwable.printStackTrace();

@@ -89,7 +89,14 @@ public class TangibleBleConnectionService {
 
     public static class RuntimePermissionsNotGranted extends Error {}
 
-    public static byte[] appendCrc(byte[] data) {
+    public byte[] getTangibleInteractionMessageWithCrc(SocialTouchInteractionService.Interaction interaction) {
+        return appendCrc(("!" + interaction.getBleCode()).getBytes());
+    }
+
+    /**
+     * Source: https://github.com/ZoneTangible/Bluefruit_LE_Connect_Android_V2/blob/97cb02e1b5d8c90e7ab1bf68548afbeb39ba5096/app/src/main/java/com/adafruit/bluefruit/le/connect/ble/central/BlePeripheralUart.java#L261-L275
+     */
+    private byte[] appendCrc(byte[] data) {
         // Calculate checksum
         byte checksum = 0;
         for (byte aData : data) {
