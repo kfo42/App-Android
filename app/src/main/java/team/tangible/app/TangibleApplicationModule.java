@@ -1,5 +1,6 @@
 package team.tangible.app;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
@@ -13,6 +14,7 @@ import dagger.Module;
 import dagger.Provides;
 import team.tangible.app.Constants;
 import team.tangible.app.services.AuthenticationService;
+import team.tangible.app.services.SocialTouchInteractionService;
 import team.tangible.app.services.TangibleBleConnectionService;
 
 
@@ -91,5 +93,10 @@ public class TangibleApplicationModule {
     @Provides
     public RxBleClient provideRxBleClient(Context context) {
         return RxBleClient.create(context);
+    }
+
+    @Provides
+    public SocialTouchInteractionService provideSocialTouchInteractionService(Context context) {
+        return new SocialTouchInteractionService(context);
     }
 }

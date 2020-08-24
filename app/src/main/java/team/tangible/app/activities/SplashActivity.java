@@ -78,6 +78,10 @@ public final class SplashActivity extends AppCompatActivity {
         // Check if the Tangible is available
         mDisposables.add(mTangibleBleConnectionService.isTangibleAvailable().subscribe(result -> {
             mMainThreadHandler.post(() -> mIsUserPairedWithTangibleLiveData.setValue(result));
+        }, throwable -> {
+            if (throwable instanceof TangibleBleConnectionService.RuntimePermissionsNotGranted) {
+                moveTo(PairingActivity.class);
+            }
         }));
 
         // Check if the user is logged in

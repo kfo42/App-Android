@@ -82,10 +82,26 @@ public class TangibleBleConnectionService {
         }
 
         String savedMacAddress = getSavedMacAddress();
-        return mRxBleClient.getBleDevice(savedMacAddress).establishConnection(false);
+        return mRxBleClient.getBleDevice(savedMacAddress).establishConnection(true);
     }
 
     public static class NoPairedTangibleException extends Error {}
 
     public static class RuntimePermissionsNotGranted extends Error {}
+
+    public static byte[] appendCrc(byte[] data) {
+        // Calculate checksum
+        byte checksum = 0;
+        for (byte aData : data) {
+            checksum += aData;
+        }
+        checksum = (byte) (~checksum);       // Invert
+
+        // Add crc to data
+        byte[] dataCrc = new byte[data.length + 1];
+        System.arraycopy(data, 0, dataCrc, 0, data.length);
+        dataCrc[data.length] = checksum;
+
+        return dataCrc;
+    }
 }
