@@ -1,50 +1,58 @@
 package team.tangible.app.activities;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 
 import com.firebase.ui.auth.IdpResponse;
-import com.google.firebase.auth.FirebaseAuth;
+
+import javax.inject.Inject;
+import javax.inject.Named;
 
 import butterknife.ButterKnife;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import team.tangible.app.BuildConfig;
+import team.tangible.app.Constants;
 import team.tangible.app.R;
+import team.tangible.app.TangibleApplication;
+import team.tangible.app.models.LoginResult;
+import team.tangible.app.models.TangibleAvailabilityResult;
+import team.tangible.app.services.AuthenticationService;
+import team.tangible.app.services.TangibleBleConnectionService;
 import team.tangible.app.utils.ActivityUtils;
-import team.tangible.app.utils.FirebaseAuthUtils;
-import team.tangible.app.utils.TangibleUtils;
 import timber.log.Timber;
 
 import static co.apptailor.googlesignin.RNGoogleSigninModule.RC_SIGN_IN;
 import static team.tangible.app.Constants.Firebase.Authentication.FIREBASE_AUTH_UI_INTENT;
 import static team.tangible.app.Constants.Toast.TOAST_LENGTH_LONG_MS;
 
-public class SplashActivity extends AppCompatActivity {
+public final class SplashActivity extends AppCompatActivity {
 
-    private static final String TAG = SplashActivity.class.getName();
-
-    private final Observer<Boolean> kIsUserPairedWithTangibleObserver = new OnIsUserPairedWithTangibleObserver();
-
-    private MutableLiveData<Boolean> mIsUserPairedWithTangibleLiveData = new MutableLiveData<>(false);
-    // TODO: Implement user auth and incorporate into this logic. Chain observables?
+    private MutableLiveData<TangibleAvailabilityResult> mIsUserPairedWithTangibleLiveData =
+            new MutableLiveData<>(TangibleAvailabilityResult.PENDING);
+    private MutableLiveData<LoginResult> mIsUserLoggedInLiveData =
+            new MutableLiveData<>(LoginResult.PENDING);
 
     private Disposable mSubscriptionDisposable;
 
-    private Handler mMainThreadHandler;
+    private CompositeDisposable mDisposables;
 
-    /**
-     * In this method, we want to check a few things to direct the user to the right activity:
-     * 1) Whether or not they are logged into the app
-     * 2) Whether or not they have paired a Tangible and if it can support a connection
-     */
+    @Inject
+    @Named(Constants.Threading.MAIN_THREAD)
+    Handler mMainThreadHandler;
+
+    @Inject
+    AuthenticationService mAuthenticationService;
+
+    @Inject
+    TangibleBleConnectionService mTangibleBleConnectionService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,47 +60,56 @@ public class SplashActivity extends AppCompatActivity {
 
         ButterKnife.bind(this);
 
-        mMainThreadHandler = new Handler(this.getMainLooper());
+        ((TangibleApplication) getApplication()).getApplicationComponent().inject(this);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        mIsUserPairedWithTangibleLiveData.observeForever(kIsUserPairedWithTangibleObserver);
+        mMainThreadHandler = new Handler(getMainLooper());
 
-        // We want to block here so we know if we have a result or not
-        mSubscriptionDisposable = TangibleUtils.getTangibleBleConnection(SplashActivity.this).subscribe(rxBleConnection -> {
-            Timber.i("User is paired with Tangible");
-            // Live data must be changed on the main thread
-            mMainThreadHandler.post(() -> {
-                mIsUserPairedWithTangibleLiveData.setValue(true);
-            });
-        }, throwable -> {
-            Timber.e(throwable, "User is NOT paired with Tangible");
-            mMainThreadHandler.post(() -> {
-                mIsUserPairedWithTangibleLiveData.setValue(false);
-            });
-        });
-    }
+        mDisposables = new CompositeDisposable();
 
-    private void moveToHomescreenActivity() {
-        Timber.i("Moving to %s", HomescreenActivity.class.getSimpleName());
-        Intent intent = new Intent(SplashActivity.this, HomescreenActivity.class);
-        startActivity(intent);
-        this.finish();
+        // Listen for changes to the pairing and login states
+        mIsUserPairedWithTangibleLiveData.observe(this, tangibleAvailabilityResult -> onLiveDataChanged());
+        mIsUserLoggedInLiveData.observe(this, loginResult -> onLiveDataChanged());
+
+        // Check if the Tangible is available
+        mDisposables.add(mTangibleBleConnectionService.isTangibleAvailable().subscribe(result -> {
+            mMainThreadHandler.post(() -> mIsUserPairedWithTangibleLiveData.setValue(result));
+        }));
+
+        // Check if the user is logged in
+        mDisposables.add(mAuthenticationService.isUserLoggedIn().subscribe(result -> {
+           mMainThreadHandler.post(() -> mIsUserLoggedInLiveData.postValue(result));
+        }));
     }
 
     @Override
     protected void onStop() {
         super.onStop();
 
+        if (mMainThreadHandler != null) {
+            mMainThreadHandler = null;
+        }
+
         if (mSubscriptionDisposable != null) {
             mSubscriptionDisposable.dispose();
             mSubscriptionDisposable = null;
         }
 
-        mIsUserPairedWithTangibleLiveData.removeObserver(kIsUserPairedWithTangibleObserver);
+        if (mDisposables != null) {
+            mDisposables.dispose();
+            mDisposables = null;
+        }
+    }
+
+    private void moveTo(Class<? extends Activity> destinationActivity) {
+        Timber.i("Moving to %s", destinationActivity.getSimpleName());
+        Intent intent = new Intent(SplashActivity.this, destinationActivity);
+        startActivity(intent);
+        finish();
     }
 
     @Override
@@ -112,9 +129,9 @@ public class SplashActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        IdpResponse loginResult = FirebaseAuthUtils.handleLoginOnActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
             // If the requestCode was valid
+            IdpResponse loginResult = IdpResponse.fromResultIntent(data);
 
             if (loginResult == null || loginResult.getError() != null) {
                 String toastMessage = loginResult == null ? "You have cancelled sign in" : loginResult.getError().getMessage();
@@ -122,73 +139,50 @@ public class SplashActivity extends AppCompatActivity {
             } else {
                 // The login was successful
                 Toast.makeText(SplashActivity.this, "Successful sign in!", Toast.LENGTH_LONG).show();
-                moveToHomescreenActivity();
+                moveTo(HomescreenActivity.class);
             }
         }
     }
 
-    class OnIsUserPairedWithTangibleObserver implements Observer<Boolean> {
+    private void onLiveDataChanged() {
+        // If the user is not paired with their Tangible, get them paired first
+        TangibleAvailabilityResult isTangibleAvailable = mIsUserPairedWithTangibleLiveData.getValue();
+        LoginResult isUserLoggedIn = mIsUserLoggedInLiveData.getValue();
 
-        @Override
-        public void onChanged(Boolean value) {
-            Lifecycle.State state = SplashActivity.this.getLifecycle().getCurrentState();
-
-            Timber.tag("LIFECYCLE DEBUG").d("Reached lifecycle point %s with boolean value %s", state, value);
-
-            if (state == Lifecycle.State.INITIALIZED || state == Lifecycle.State.STARTED) {
-                return;
-            }
-
-            // If the user is not paired with their Tangible, get them paired first
-            boolean isUserPairedWithTangible = value;
-            boolean isUserLoggedIn = FirebaseAuth.getInstance().getCurrentUser() != null;
-
-            if (isUserPairedWithTangible && isUserLoggedIn) {
-
-                // By now, we have checked if the user is paired with their Tangible AND we have
-                // checked if they are in fact signed in, we can finally send them to the
-                // Homescreen activity
-
-                Timber.i("User is logged in and has their Tangible paired");
-
-                mMainThreadHandler.post(SplashActivity.this::moveToHomescreenActivity);
-
-            } else if (isUserPairedWithTangible) // && !isUserLoggedIn [implied]
-            {
-                Timber.w("User is not logged in. Moving to Firebase Auth UI");
-
-                // If they are not signed in (the user is null), then start the sign in UI
-                mMainThreadHandler.postDelayed(() -> {
-
-                    Toast.makeText(SplashActivity.this, "Let's get you signed in...", Toast.LENGTH_LONG).show();
-
-                    // Create and launch sign-in intent
-                    startActivityForResult(FIREBASE_AUTH_UI_INTENT, RC_SIGN_IN);
-
-                }, TOAST_LENGTH_LONG_MS);
-
-            } else if (isUserLoggedIn) // && !isUserPairedWithTangible
-            {
-                Timber.w("User is not paired with Tangible. Moving to %s", PairingActivity.class.getSimpleName());
-
-                mMainThreadHandler.postDelayed(() -> {
-
-                    Toast.makeText(SplashActivity.this, "Let's pair your Tangible...", Toast.LENGTH_LONG).show();
-
-                    startActivity(new Intent(SplashActivity.this, PairingActivity.class));
-
-                }, TOAST_LENGTH_LONG_MS);
-
-            } else { // The user is not paired or logged in.
-                // Move to the Pairing Activity which will forward the user to the
-                // Firebase Auth UI as needed
-
-                Timber.w("User is not paired with Tangible nor logged in. Moving to %s", PairingActivity.class.getSimpleName());
-
-                // Create and launch sign-in intent
-                startActivity(new Intent(SplashActivity.this, PairingActivity.class));
-
-            }
+        // If the results are pending, then wait for another change
+        if (isUserLoggedIn == LoginResult.PENDING || isTangibleAvailable == TangibleAvailabilityResult.PENDING) {
+            return;
         }
+
+        if (isTangibleAvailable == TangibleAvailabilityResult.NOT_PAIRED || isTangibleAvailable == TangibleAvailabilityResult.NOT_FOUND) {
+            // We want to go to the PairingActivity
+            moveTo(PairingActivity.class);
+            return;
+        }
+
+        // Now we know that isTangibleAvailable == TangibleAvailability.AVAILABLE
+        if (BuildConfig.DEBUG && isTangibleAvailable != TangibleAvailabilityResult.AVAILABLE) {
+            throw new AssertionError("Assertion failed");
+        }
+
+        if (isUserLoggedIn == LoginResult.SUCCESS) {
+            // We can go to the Homescreen
+            moveTo(HomescreenActivity.class);
+            return;
+        }
+
+        if (BuildConfig.DEBUG && isUserLoggedIn != LoginResult.FAILURE) {
+            throw new AssertionError("Assertion failed");
+        }
+
+        // If they are not signed in, then start the sign in UI
+        mMainThreadHandler.postDelayed(() -> {
+
+            Toast.makeText(SplashActivity.this, "Let's get you signed in...", Toast.LENGTH_LONG).show();
+
+            // Create and launch sign-in intent
+            startActivityForResult(FIREBASE_AUTH_UI_INTENT, RC_SIGN_IN);
+
+        }, TOAST_LENGTH_LONG_MS);
     }
 }

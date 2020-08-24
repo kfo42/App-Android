@@ -27,6 +27,8 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    compileOptions.incremental = false
 }
 
 dependencies {
@@ -58,4 +60,39 @@ dependencies {
 
     // Firebase UI for Authentication
     implementation 'com.firebaseui:firebase-ui-auth:6.2.0'
+
+    // ********
+    // DAGGER DEPENDENCY INJECTION
+    // ********
+
+    implementation 'com.google.dagger:dagger-android:2.15'
+    implementation 'com.google.dagger:dagger-android-support:2.15'
+    annotationProcessor 'com.google.dagger:dagger-android-processor:2.15'
+    // See: https://stackoverflow.com/a/46058354
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.15'
+    androidTestAnnotationProcessor 'com.google.dagger:dagger-compiler:2.15'
+
+    // ********
+    // ESPRESSO TEST FRAMEWORK
+    // ********
+
+    // See: https://developer.android.com/training/testing/espresso/intents
+    androidTestImplementation 'androidx.test.espresso:espresso-intents:3.2.0'
+    androidTestImplementation 'androidx.test:runner:1.2.0'
+    androidTestImplementation 'androidx.test:rules:1.2.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+    // ********
+    // MOCKITO MOCKING FOR TESTING
+    // ********
+
+    androidTestImplementation "org.mockito:mockito-core:3.3.3"
+    androidTestImplementation 'org.mockito:mockito-android:3.3.3'
+
+    // ********
+    // DAGGER MOCK FOR MOCKING DAGGER IN TESTING
+    // ********
+
+    testImplementation 'com.github.fabioCollini.daggermock:daggermock:0.8.4'
+    androidTestImplementation 'com.github.fabioCollini.daggermock:daggermock:0.8.4'
 }

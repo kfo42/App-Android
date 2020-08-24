@@ -1,44 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="@color/white"
     android:padding="5dp"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
+
 
     <TextView
         android:id="@+id/text_view_device_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Device Name">
-    </TextView>
-
-    <TextView
-        android:id="@+id/text_view_device_status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/text_view_device_name"
-        android:layout_marginStart="10dp"
-        android:text="Device Status">
-    </TextView>
+        android:textStyle="bold"
+        android:text="Device Name"></TextView>
 
     <TextView
         android:id="@+id/text_view_device_address"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/text_view_device_status"
-        android:layout_marginStart="10dp"
-        android:typeface="monospace"
-        android:text="Device Address">
-    </TextView>
+        android:layout_below="@id/text_view_device_name"
+        android:text="Device Address"
+        android:typeface="monospace"></TextView>
 
     <Button
         android:id="@+id/button_connect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/text_view_device_status"
-        android:gravity="center"
         android:layout_alignParentEnd="true"
-        android:text="Pair">
-    </Button>
+        android:gravity="center"
+        android:text="Pair"></Button>
 
 </RelativeLayout>
