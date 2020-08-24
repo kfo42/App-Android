@@ -1,7 +1,12 @@
 package team.tangible.app;
 
 import android.Manifest;
+import android.content.Intent;
 
+import com.firebase.ui.auth.AuthUI;
+
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 public class Constants {
@@ -41,5 +46,21 @@ public class Constants {
         public static class Keys {
             public static final String PAIRED_BLE_DEVICE_MAC_ADDRESS = "PAIRED_BLE_DEVICE_MAC_ADDRESS";
         }
+    }
+
+    public static class Firebase {
+        public static class Authentication {
+            public static final List<AuthUI.IdpConfig> PROVIDERS = Collections.singletonList(
+                    new AuthUI.IdpConfig.EmailBuilder().build());
+            public static final Intent FIREBASE_AUTH_UI_INTENT = AuthUI.getInstance()
+                    .createSignInIntentBuilder()
+                    .setAvailableProviders(PROVIDERS)
+                    .build();
+        }
+    }
+
+    public static class Toast {
+        // This duration maps to {@see Toast.LENGTH_LONG}
+        public static final int TOAST_LENGTH_LONG_MS = 3500;
     }
 }
