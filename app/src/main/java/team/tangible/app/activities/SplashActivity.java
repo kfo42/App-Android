@@ -32,7 +32,7 @@ import static co.apptailor.googlesignin.RNGoogleSigninModule.RC_SIGN_IN;
 import static team.tangible.app.Constants.Firebase.Authentication.FIREBASE_AUTH_UI_INTENT;
 import static team.tangible.app.Constants.Toast.TOAST_LENGTH_LONG_MS;
 
-public final class SplashActivity extends AppCompatActivity {
+public class SplashActivity extends AppCompatActivity {
 
     private MutableLiveData<TangibleAvailabilityResult> mIsUserPairedWithTangibleLiveData =
             new MutableLiveData<>(TangibleAvailabilityResult.PENDING);
