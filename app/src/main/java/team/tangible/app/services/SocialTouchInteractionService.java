@@ -122,10 +122,8 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
             interaction = Interaction.SINGLE_BACK_LEFT;
         } else if (actuator.toString() == "top_left") {
             interaction = Interaction.SINGLE_TOP_LEFT;
-        } else if (actuator.toString() == "front_left") {
+        } else {
             interaction = Interaction.SINGLE_FRONT_LEFT;
-        } else{
-            interaction = Interaction.UNKNOWN;
         }
 
         mOnInteractionListener.onInteraction(interaction);
@@ -150,10 +148,8 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
             interaction = Interaction.DOUBLE_BACK_LEFT;
         } else if (actuator.toString() == "top_left") {
             interaction = Interaction.DOUBLE_TOP_LEFT;
-        } else if (actuator.toString() == "front_left") {
+        } else {
             interaction = Interaction.DOUBLE_FRONT_LEFT;
-        } else{
-            interaction = Interaction.UNKNOWN;
         }
 
         mOnInteractionListener.onInteraction(interaction);
@@ -178,10 +174,8 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
             interaction = Interaction.LONG_BACK_LEFT;
         } else if (actuator.toString() == "top_left") {
             interaction = Interaction.LONG_TOP_LEFT;
-        } else if (actuator.toString() == "front_left") {
+        } else {
             interaction = Interaction.LONG_FRONT_LEFT;
-        } else{
-            interaction = Interaction.UNKNOWN;
         }
 
         mOnInteractionListener.onInteraction(interaction);
