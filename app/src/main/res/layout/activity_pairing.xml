@@ -48,6 +48,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center|bottom"
                 android:text="Continue without pairing"
+                android:visibility="gone"
                 app:layout_constraintTop_toBottomOf="@id/activity_pairing_scanned_peripherals" />
 
         </LinearLayout>

@@ -42,7 +42,7 @@ public class Constants {
     }
 
     public static class SharedPreferences {
-        public static final String NAME = "team.tangible.app";
+        public static final String TEAM_TANGIBLE_APP = "team.tangible.app";
         public static class Keys {
             public static final String PAIRED_BLE_DEVICE_MAC_ADDRESS = "PAIRED_BLE_DEVICE_MAC_ADDRESS";
         }
@@ -62,5 +62,9 @@ public class Constants {
     public static class Toast {
         // This duration maps to {@see Toast.LENGTH_LONG}
         public static final int TOAST_LENGTH_LONG_MS = 3500;
+    }
+
+    public class Threading {
+        public static final String MAIN_THREAD = "MAIN_THREAD";
     }
 }

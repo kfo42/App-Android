@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -21,38 +20,40 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.polidea.rxandroidble2.RxBleClient;
 import com.polidea.rxandroidble2.RxBleDevice;
 import com.polidea.rxandroidble2.scan.ScanResult;
-import com.polidea.rxandroidble2.scan.ScanSettings;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import team.tangible.app.BuildConfig;
 import team.tangible.app.Constants;
 import team.tangible.app.R;
+import team.tangible.app.TangibleApplication;
+import team.tangible.app.models.LoginResult;
+import team.tangible.app.models.TangibleAvailabilityResult;
+import team.tangible.app.services.AuthenticationService;
+import team.tangible.app.services.TangibleBleConnectionService;
 import team.tangible.app.utils.ActivityUtils;
 import team.tangible.app.utils.ArrayUtils;
-import team.tangible.app.utils.RxBleUtils;
-import team.tangible.app.utils.TangibleUtils;
 import timber.log.Timber;
 
 import static co.apptailor.googlesignin.RNGoogleSigninModule.RC_SIGN_IN;
 import static team.tangible.app.Constants.Firebase.Authentication.FIREBASE_AUTH_UI_INTENT;
-import static team.tangible.app.Constants.SharedPreferences.NAME;
 import static team.tangible.app.Constants.Toast.TOAST_LENGTH_LONG_MS;
-import static team.tangible.app.Constants.SharedPreferences.Keys;
 
 public class PairingActivity extends AppCompatActivity {
 
-    private static final String TAG = PairingActivity.class.getName();
-    private static final int BLUETOOTH_PERMISSIONS_REQUEST_CODE = 1;
+    private static final int BLUETOOTH_PERMISSIONS_REQUEST_CODE = 42;
 
     @BindView(R.id.activity_pairing_status)
     TextView mStatusTextView;
@@ -63,15 +64,24 @@ public class PairingActivity extends AppCompatActivity {
     @BindView(R.id.activity_pairing_continue_without_pairing)
     Button mContinueWithoutPairingButton;
 
-    private ScannedPeripheralsAdapter mScannedPeripheralsAdapter = new ScannedPeripheralsAdapter();
-    private Disposable mScanSubscription;
-    private RxBleClient mRxBleClient;
+    @Inject
+    TangibleBleConnectionService mTangibleBleConnectionService;
 
-    private MutableLiveData<List<RxBleDevice>> mRxBleDevicesLiveData = new MutableLiveData<List<RxBleDevice>>() {{
-        setValue(new ArrayList<>());
-    }};
-    private Handler mMainThreadHandler;
-    private Disposable mConnectionCheckingSubscription;
+    private ScannedPeripheralsAdapter mScannedPeripheralsAdapter = new ScannedPeripheralsAdapter();
+
+    private Disposable mScanSubscription;
+
+    private MutableLiveData<List<RxBleDevice>> mRxBleDevicesLiveData = new MutableLiveData<>(new ArrayList<>());
+
+    @Inject
+    @Named(Constants.Threading.MAIN_THREAD)
+    Handler mMainThreadHandler;
+
+    @Inject
+    AuthenticationService mAuthenticationService;
+
+    private CompositeDisposable mDisposables;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,35 +90,38 @@ public class PairingActivity extends AppCompatActivity {
 
         ButterKnife.bind(this);
 
-        mMainThreadHandler = new Handler(this.getMainLooper());
+        ((TangibleApplication) getApplication()).getApplicationComponent().inject(this);
 
-        mContinueWithoutPairingButton.setOnClickListener(view -> {
-            Intent moveToLoginIntent = new Intent(PairingActivity.this, HomescreenActivity.class);
-            startActivity(moveToLoginIntent);
-        });
+        // Only present the "Continue without Pairing" button in debug mode
+        if (BuildConfig.DEBUG) {
+            mContinueWithoutPairingButton.setVisibility(View.VISIBLE);
+            mContinueWithoutPairingButton.setOnClickListener(view -> {
+                startActivity(new Intent(PairingActivity.this, HomescreenActivity.class));
+                finish();
+            });
+        }
 
+        // Make the list view respond to changes through this adapter
         mScannedPeripheralsListView.setAdapter(mScannedPeripheralsAdapter);
 
-        mRxBleClient = RxBleClient.create(PairingActivity.this);
-
-        mRxBleDevicesLiveData.observe(PairingActivity.this, mScannedPeripheralsAdapter);
+        // Listen for changes to the available BLE devices and post to the adapter
+        mRxBleDevicesLiveData.observe(this, mScannedPeripheralsAdapter);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        mConnectionCheckingSubscription = TangibleUtils.getTangibleBleConnection(PairingActivity.this).subscribe(rxBleConnection -> {
-            Timber.i("BLE device + connection available for already paired device");
-            Intent moveToLoginIntent = new Intent(PairingActivity.this, HomescreenActivity.class);
-            PairingActivity.this.startActivity(moveToLoginIntent);
-            PairingActivity.this.finish();
-        }, throwable -> {
-            // throw new RuntimeException(throwable);
-        });
+        mDisposables.add(mTangibleBleConnectionService.isTangibleAvailable().subscribe(tangibleAvailabilityResult -> {
+            if (tangibleAvailabilityResult == TangibleAvailabilityResult.AVAILABLE) {
+                Timber.i("BLE device + connection available for already paired device");
+                startActivity(new Intent(PairingActivity.this, HomescreenActivity.class));
+                finish();
+            }
+        }));
 
-        if (!mRxBleClient.isScanRuntimePermissionGranted()) {
-            String[] rxBleClientPermissions = mRxBleClient.getRecommendedScanRuntimePermissions();
+        if (!mTangibleBleConnectionService.areRuntimePermissionsGranted()) {
+            String[] rxBleClientPermissions = mTangibleBleConnectionService.getRuntimePermissions();
             // Merge the permissions from the client and from what we'd like
             String[] permissionsToRequest = ArrayUtils.joinDistinct(rxBleClientPermissions, Constants.RequiredPermissions.BLUETOOTH_LOW_ENERGY);
             this.requestPermissions(permissionsToRequest, BLUETOOTH_PERMISSIONS_REQUEST_CODE);
@@ -116,7 +129,7 @@ public class PairingActivity extends AppCompatActivity {
             onAllPermissionsGranted();
         }
 
-        mRxBleDevicesLiveData.observe(PairingActivity.this, rxBleDevices -> {
+        mRxBleDevicesLiveData.observe(this, rxBleDevices -> {
             if (rxBleDevices.isEmpty()) {
                 mStatusTextView.setText(R.string.no_bluetooth_devices_found_searching);
             } else {
@@ -146,29 +159,28 @@ public class PairingActivity extends AppCompatActivity {
     }
 
     private void startBleDeviceScan() {
-        mScanSubscription = mRxBleClient.scanBleDevices(new ScanSettings.Builder().build())
-                .subscribe(
-                        (ScanResult scanResult) -> {
-                            // Process scan result here.
-                            RxBleDevice bleDevice = scanResult.getBleDevice();
-                            if (bleDevice != null && bleDevice.getName() != null) {
-                                List<RxBleDevice> devicesList = Objects.requireNonNull(mRxBleDevicesLiveData.getValue());
+        mScanSubscription = mTangibleBleConnectionService.scanBleDevices().subscribe(
+            (ScanResult scanResult) -> {
+                // Process scan result here
+                RxBleDevice bleDevice = scanResult.getBleDevice();
+                if (bleDevice != null && bleDevice.getName() != null) {
+                    List<RxBleDevice> devicesList = Objects.requireNonNull(mRxBleDevicesLiveData.getValue());
 
-                                if (!devicesList.contains(bleDevice)) {
-                                    devicesList.add(bleDevice);
-                                    mRxBleDevicesLiveData.setValue(devicesList);
-                                    Timber.i("Added BLE Device to live data: %s", bleDevice.getName());
-                                } else {
-                                    Timber.d("BLE Device already in live data: %s", bleDevice.getName());
-                                }
+                    if (!devicesList.contains(bleDevice)) {
+                        devicesList.add(bleDevice);
+                        mRxBleDevicesLiveData.setValue(devicesList);
+                        Timber.i("Added BLE Device to live data: %s", bleDevice.getName());
+                    } else {
+                        Timber.d("BLE Device already in live data: %s", bleDevice.getName());
+                    }
 
-                            }
-                        },
-                        (Throwable throwable) -> {
-                            // Handle an error here.
-                            Timber.e(throwable);
-                        }
-                );
+                }
+            },
+            (Throwable throwable) -> {
+                // Handle an error here.
+                Timber.e(throwable);
+            }
+        );
     }
 
     @Override
@@ -180,9 +192,9 @@ public class PairingActivity extends AppCompatActivity {
             mScanSubscription = null;
         }
 
-        if (mConnectionCheckingSubscription != null) {
-            mConnectionCheckingSubscription.dispose();
-            mConnectionCheckingSubscription = null;
+        if (mDisposables != null) {
+            mDisposables.dispose();
+            mDisposables = null;
         }
     }
 
@@ -219,7 +231,6 @@ public class PairingActivity extends AppCompatActivity {
             // Bind text and listeners to list item Views
             ((TextView) convertView.findViewById(R.id.text_view_device_name)).setText(bleDevice.getName());
             ((TextView) convertView.findViewById(R.id.text_view_device_address)).setText(bleDevice.getMacAddress());
-            ((TextView) convertView.findViewById(R.id.text_view_device_status)).setText(RxBleUtils.getConnectionStateString(bleDevice.getConnectionState()));
             ((Button) convertView.findViewById(R.id.button_connect)).setOnClickListener((View v) -> {
                 new AlertDialog.Builder(PairingActivity.this)
                         .setTitle("Confirm Tangible pairing")
@@ -255,11 +266,7 @@ public class PairingActivity extends AppCompatActivity {
 
             Toast.makeText(PairingActivity.this, "Paired with " + mRxBleDevice.getName(), Toast.LENGTH_LONG).show();
 
-            SharedPreferences sharedPreferences = PairingActivity.this.getSharedPreferences(NAME, Context.MODE_PRIVATE);
-            SharedPreferences.Editor sharedPreferencesEditor = sharedPreferences.edit();
-            sharedPreferencesEditor.putString(Keys.PAIRED_BLE_DEVICE_MAC_ADDRESS, mRxBleDevice.getMacAddress());
-
-            if (!sharedPreferencesEditor.commit()) {
+            if (!mTangibleBleConnectionService.setSavedMacAddress(mRxBleDevice.getMacAddress())) {
                 // If the saving to SharedPreferences failed...
 
                 Timber.e("Failed to save MAC address %s to %s", mRxBleDevice.getMacAddress(), SharedPreferences.class.getSimpleName());
@@ -275,12 +282,7 @@ public class PairingActivity extends AppCompatActivity {
                             .setTitle("Failed to pair to Bluetooth device")
                             .setMessage(mRxBleDevice.getName())
                             .setCancelable(false)
-                            .setPositiveButton("Try again...", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            })
+                            .setPositiveButton("Try again...", (dialog1, which1) -> dialog1.dismiss())
                             .create()
                             .show();
 
@@ -289,31 +291,26 @@ public class PairingActivity extends AppCompatActivity {
                 return;
             }
 
-            boolean isUserLoggedIn = FirebaseAuth.getInstance().getCurrentUser() != null;
+            mDisposables.add(mAuthenticationService.isUserLoggedIn().subscribe(result -> {
+                if (result == LoginResult.SUCCESS) {
+                    // Then move to the Homescreen! We're done with all the setup
+                    startActivity(new Intent(PairingActivity.this, HomescreenActivity.class));
+                    finish();
+                } else {
+                    // User isn't logged in so log them in
+                    Timber.w("User is not logged in. Moving to Firebase Auth UI");
 
-            if (isUserLoggedIn) {
-                // Then move to the Homescreen! We're done with all the setup
-                Intent intent = new Intent(PairingActivity.this, HomescreenActivity.class);
-                PairingActivity.this.startActivity(intent);
-                PairingActivity.this.finish();
+                    // If they are not signed in (the user is null), then start the sign in UI
+                    mMainThreadHandler.postDelayed(() -> {
 
-            } else {
-                // User isn't logged in so
+                        Toast.makeText(PairingActivity.this, "Let's get you signed in...", Toast.LENGTH_LONG).show();
 
-                Timber.w("User is not logged in. Moving to Firebase Auth UI");
+                        // Create and launch sign-in intent
+                        startActivityForResult(FIREBASE_AUTH_UI_INTENT, RC_SIGN_IN);
 
-                // If they are not signed in (the user is null), then start the sign in UI
-                mMainThreadHandler.postDelayed(() -> {
-
-                    Toast.makeText(PairingActivity.this, "Let's get you signed in...", Toast.LENGTH_LONG).show();
-
-                    // Create and launch sign-in intent
-                    startActivityForResult(FIREBASE_AUTH_UI_INTENT, RC_SIGN_IN);
-
-                }, TOAST_LENGTH_LONG_MS);
-
-            }
-
+                    }, TOAST_LENGTH_LONG_MS);
+                }
+            }));
         }
     }
 
