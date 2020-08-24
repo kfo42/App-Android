@@ -96,7 +96,7 @@ public class TangibleBleConnectionService {
     /**
      * Source: https://github.com/ZoneTangible/Bluefruit_LE_Connect_Android_V2/blob/97cb02e1b5d8c90e7ab1bf68548afbeb39ba5096/app/src/main/java/com/adafruit/bluefruit/le/connect/ble/central/BlePeripheralUart.java#L261-L275
      */
-    private byte[] appendCrc(byte[] data) {
+    static public byte[] appendCrc(byte[] data) {
         // Calculate checksum
         byte checksum = 0;
         for (byte aData : data) {
