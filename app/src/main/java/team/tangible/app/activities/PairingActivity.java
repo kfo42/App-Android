@@ -39,7 +39,6 @@ import team.tangible.app.BuildConfig;
 import team.tangible.app.Constants;
 import team.tangible.app.R;
 import team.tangible.app.TangibleApplication;
-import team.tangible.app.results.LoginResult;
 import team.tangible.app.results.TangibleAvailabilityResult;
 import team.tangible.app.services.AuthenticationService;
 import team.tangible.app.services.TangibleBleConnectionService;
