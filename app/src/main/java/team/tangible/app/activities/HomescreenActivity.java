@@ -151,6 +151,9 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
     public void onInteraction(SocialTouchInteractionService.Interaction interaction) {
         Timber.i(interaction.getBleCode());
 
+        if(interaction == SocialTouchInteractionService.Interaction.DOUBLE_BACK_LEFT){
+            
+        }
         mMainThreadHandler.post(() -> {
             RxBleConnection bleConnection = mRxBleConnectionLiveData.getValue();
             if (bleConnection == null) {

@@ -115,17 +115,17 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
         Actuator actuator = getActuator(x, y, width, height);
         Interaction interaction;
 
-        if (actuator == Actuator.back_right) {
+        if (actuator == Actuator.BACK_RIGHT) {
             interaction = Interaction.SINGLE_BACK_RIGHT;
-        } else if (actuator == Actuator.top_right) {
+        } else if (actuator == Actuator.TOP_RIGHT) {
             interaction = Interaction.SINGLE_TOP_RIGHT;
-        } else if (actuator == Actuator.front_right) {
+        } else if (actuator == Actuator.FRONT_RIGHT) {
             interaction = Interaction.SINGLE_FRONT_RIGHT;
-        } else if (actuator == Actuator.back_left) {
+        } else if (actuator == Actuator.BACK_LEFT) {
             interaction = Interaction.SINGLE_BACK_LEFT;
-        } else if (actuator == Actuator.top_left) {
+        } else if (actuator == Actuator.TOP_LEFT) {
             interaction = Interaction.SINGLE_TOP_LEFT;
-        } else if (actuator == Actuator.front_left) {
+        } else if (actuator == Actuator.FRONT_LEFT) {
             interaction = Interaction.SINGLE_FRONT_LEFT;
         } else{
             interaction = Interaction.UNKNOWN;
@@ -145,17 +145,17 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
         Actuator actuator = getActuator(x, y, width, height);
         Interaction interaction;
 
-        if (actuator.toString() == "back_right") {
+        if (actuator == Actuator.BACK_RIGHT) {
             interaction = Interaction.DOUBLE_BACK_RIGHT;
-        } else if (actuator.toString() == "top_right") {
+        } else if (actuator == Actuator.TOP_RIGHT) {
             interaction = Interaction.DOUBLE_TOP_RIGHT;
-        } else if (actuator.toString() == "front_right") {
+        } else if (actuator == Actuator.FRONT_RIGHT) {
             interaction = Interaction.DOUBLE_FRONT_RIGHT;
-        } else if (actuator.toString() == "back_left") {
+        } else if (actuator == Actuator.BACK_LEFT) {
             interaction = Interaction.DOUBLE_BACK_LEFT;
-        } else if (actuator.toString() == "top_left") {
+        } else if (actuator == Actuator.TOP_LEFT) {
             interaction = Interaction.DOUBLE_TOP_LEFT;
-        } else if (actuator.toString() == "front_left") {
+        } else if (actuator == Actuator.FRONT_LEFT) {
             interaction = Interaction.DOUBLE_FRONT_LEFT;
         } else{
             interaction = Interaction.UNKNOWN;
@@ -177,17 +177,17 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
         Actuator actuator = getActuator(x, y, width, height);
         Interaction interaction;
 
-        if (actuator.toString() == "back_right") {
+        if (actuator == Actuator.BACK_RIGHT) {
             interaction = Interaction.LONG_BACK_RIGHT;
-        } else if (actuator.toString() == "top_right") {
+        } else if (actuator == Actuator.TOP_RIGHT) {
             interaction = Interaction.LONG_TOP_RIGHT;
-        } else if (actuator.toString() == "front_right") {
+        } else if (actuator == Actuator.FRONT_RIGHT) {
             interaction = Interaction.LONG_FRONT_RIGHT;
-        } else if (actuator.toString() == "back_left") {
+        } else if (actuator == Actuator.BACK_LEFT) {
             interaction = Interaction.LONG_BACK_LEFT;
-        } else if (actuator.toString() == "top_left") {
+        } else if (actuator == Actuator.TOP_LEFT) {
             interaction = Interaction.LONG_TOP_LEFT;
-        } else if (actuator.toString() == "front_left") {
+        } else if (actuator == Actuator.FRONT_LEFT) {
             interaction = Interaction.LONG_FRONT_LEFT;
         } else{
             interaction = Interaction.UNKNOWN;
@@ -209,22 +209,22 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
 
     public Actuator getActuator(float x, float y, float width, float height){
         if(inRange(x, 0, width/2)){
-            if(inRange(y,  0, height/3)) return Actuator.back_left;
-            if(inRange(y, height/3, 2*height/3)) return Actuator.top_left;
-            else return Actuator.front_left;
+            if(inRange(y,  0, height/3)) return Actuator.BACK_LEFT;
+            if(inRange(y, height/3, 2*height/3)) return Actuator.TOP_LEFT;
+            else return Actuator.FRONT_LEFT;
         }else{
-            if(inRange(y,  0, height/3)) return Actuator.back_right;
-            if(inRange(y, height/3, 2*height/3)) return Actuator.top_right;
-            else return Actuator.front_right;
+            if(inRange(y,  0, height/3)) return Actuator.BACK_RIGHT;
+            if(inRange(y, height/3, 2*height/3)) return Actuator.TOP_RIGHT;
+            else return Actuator.FRONT_RIGHT;
         }
     }
 
     public enum Actuator{
-        front_left,
-        front_right,
-        top_left,
-        top_right,
-        back_left,
-        back_right;
+        BACK_LEFT,
+        FRONT_LEFT,
+        TOP_LEFT,
+        BACK_RIGHT,
+        TOP_RIGHT,
+        FRONT_RIGHT;
     }
 }
