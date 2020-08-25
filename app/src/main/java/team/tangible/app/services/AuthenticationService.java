@@ -14,7 +14,23 @@ public class AuthenticationService {
         mFirebaseAuth = firebaseAuth;
     }
 
-    public Single<LoginResult> isUserLoggedIn() {
-        return Single.just(mFirebaseAuth.getCurrentUser() != null ? SUCCESS : FAILURE);
+    public boolean isUserLoggedIn() {
+        return getFirebaseUser() != null;
     }
+
+    private FirebaseUser getFirebaseUser() {
+        return mFirebaseAuth.getCurrentUser();
+    }
+
+    public User getUser() {
+        if (!isUserLoggedIn()) {
+            throw new AuthenticationError();
+        }
+
+        FirebaseUser firebaseUser = getFirebaseUser();
+
+        return new User(firebaseUser.getEmail(), firebaseUser.getUid());
+    }
+
+    public static class AuthenticationError extends Error {}
 }
