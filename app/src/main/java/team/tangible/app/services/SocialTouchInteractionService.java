@@ -15,10 +15,10 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import timber.log.Timber;
 
+import static team.tangible.app.utils.FloatUtils.inRange;
+
 public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestureListener {
-    private DisplayMetrics mDisplayMetrics = new DisplayMetrics();
-    float width = mDisplayMetrics.widthPixels;
-    float height = mDisplayMetrics.heightPixels;
+    private DisplayMetrics mDisplayMetrics;
     private OnInteractionListener mOnInteractionListener;
 
     public enum Interaction {
@@ -70,6 +70,7 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
     }
 
     public SocialTouchInteractionService(Context context) {
+        mDisplayMetrics = new DisplayMetrics();
         ((WindowManager) Objects.requireNonNull(context.getSystemService(Context.WINDOW_SERVICE)))
                 .getDefaultDisplay().getMetrics(mDisplayMetrics);
     }
@@ -84,8 +85,8 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
         float deltaX = event2.getRawX() - event1.getRawX();
         float deltaY = event2.getRawY() - event1.getRawY();
 
-        float normalizedDeltaX = deltaX / width;
-        float normalizedDeltaY = deltaY / height;
+        float normalizedDeltaX = deltaX / mDisplayMetrics.widthPixels;
+        float normalizedDeltaY = deltaY / mDisplayMetrics.heightPixels;
 
         boolean isFlingVertical = Math.abs(normalizedDeltaY) > Math.abs(normalizedDeltaX);
 
@@ -97,6 +98,8 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
             interaction = normalizedDeltaX < 0 ? Interaction.FLING_LEFT : Interaction.FLING_RIGHT;
         }
 
+        //TODO: Color-changing line animation
+
         mOnInteractionListener.onInteraction(interaction);
 
         return true;
@@ -107,23 +110,26 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
 
         float x = e.getX();
         float y = e.getY();
-        Actuator actuator = getActuator(x, y);
+        float width = mDisplayMetrics.widthPixels;
+        float height = mDisplayMetrics.heightPixels;
+        Actuator actuator = getActuator(x, y, width, height);
         Interaction interaction;
 
-        if (actuator.toString() == "back_right") {
+        if (actuator == Actuator.back_right) {
             interaction = Interaction.SINGLE_BACK_RIGHT;
-        } else if (actuator.toString() == "top_right") {
+        } else if (actuator == Actuator.top_right) {
             interaction = Interaction.SINGLE_TOP_RIGHT;
-        } else if (actuator.toString() == "front_right") {
+        } else if (actuator == Actuator.front_right) {
             interaction = Interaction.SINGLE_FRONT_RIGHT;
-        } else if (actuator.toString() == "back_left") {
+        } else if (actuator == Actuator.back_left) {
             interaction = Interaction.SINGLE_BACK_LEFT;
-        } else if (actuator.toString() == "top_left") {
+        } else if (actuator == Actuator.top_left) {
             interaction = Interaction.SINGLE_TOP_LEFT;
-        } else if (actuator.toString() == "front_left") {
+        } else if (actuator == Actuator.front_left) {
             interaction = Interaction.SINGLE_FRONT_LEFT;
         } else{
             interaction = Interaction.UNKNOWN;
+            return false;
         }
 
         mOnInteractionListener.onInteraction(interaction);
@@ -134,7 +140,9 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
     public boolean onDoubleTap(MotionEvent e) {
         float x = e.getX();
         float y = e.getY();
-        Actuator actuator = getActuator(x, y);
+        float width = mDisplayMetrics.widthPixels;
+        float height = mDisplayMetrics.heightPixels;
+        Actuator actuator = getActuator(x, y, width, height);
         Interaction interaction;
 
         if (actuator.toString() == "back_right") {
@@ -151,7 +159,10 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
             interaction = Interaction.DOUBLE_FRONT_LEFT;
         } else{
             interaction = Interaction.UNKNOWN;
+            return false;
         }
+
+        //TODO: Fluttering/rising hearts animation
 
         mOnInteractionListener.onInteraction(interaction);
         return true;
@@ -161,7 +172,9 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
     public void onLongPress(MotionEvent e) {
         float x = e.getX();
         float y = e.getY();
-        Actuator actuator = getActuator(x, y);
+        float width = mDisplayMetrics.widthPixels;
+        float height = mDisplayMetrics.heightPixels;
+        Actuator actuator = getActuator(x, y, width, height);
         Interaction interaction;
 
         if (actuator.toString() == "back_right") {
@@ -178,20 +191,32 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
             interaction = Interaction.LONG_FRONT_LEFT;
         } else{
             interaction = Interaction.UNKNOWN;
+            return;
         }
 
         mOnInteractionListener.onInteraction(interaction);
 
-        // growing heart animation at point of long press
+        //TODO: growing heart animation at point of long press
 
-        // add "bump" sensation
-        // add "delta wave massage" sensation sequence
     }
 
-    //Finds the correct actuator for single tap, double tap, and long press
+    /** Finds the correct actuator for single tap, double tap, and long press
+     * @param x the x-coordinate of the tap or press
+     * @param y the y-coordinate of the tap or press
+     * @param width the width (px) of the current screen
+     * @param height the height (px) of the current screen
+     * */
 
-    public Actuator getActuator(float x, float y){
-        return Actuator.fromCoords(x, y, width, height);
+    public Actuator getActuator(float x, float y, float width, float height){
+        if(inRange(x, 0, width/2)){
+            if(inRange(y,  0, height/3)) return Actuator.back_left;
+            if(inRange(y, height/3, 2*height/3)) return Actuator.top_left;
+            else return Actuator.front_left;
+        }else{
+            if(inRange(y,  0, height/3)) return Actuator.back_right;
+            if(inRange(y, height/3, 2*height/3)) return Actuator.top_right;
+            else return Actuator.front_right;
+        }
     }
 
     public enum Actuator{
@@ -201,23 +226,5 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
         top_right,
         back_left,
         back_right;
-
-        public static Actuator fromCoords(float x, float y, float width, float height){
-            if(inRange(x, 0, width/2)){
-                if(inRange(y,  0, height/3)) return Actuator.back_left;
-                if(inRange(y, height/3, 2*height/3)) return Actuator.top_left;
-                else return Actuator.front_left;
-            }else{
-                if(inRange(y,  0, height/3)) return Actuator.back_right;
-                if(inRange(y, height/3, 2*height/3)) return Actuator.top_right;
-                else return Actuator.front_right;
-            }
-        }
-        private static boolean inRange(float coord, float init, float end){
-            return (coord >= init) && (coord < end);
-        }
     }
-
-
-
 }

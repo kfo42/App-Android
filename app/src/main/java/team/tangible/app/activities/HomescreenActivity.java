@@ -86,8 +86,10 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
                 setEventsInterceptionEnabled(true);
                 setOrientation(ORIENTATION_VERTICAL);
                 setUncertainGestureColor(context.getColor(R.color.design_default_color_primary));
-                setGestureColor(context.getColor(R.color.design_default_color_secondary));
+                setGestureColor(context.getColor(R.color.design_default_color_background));
                 setOnTouchListener(HomescreenActivity.this);
+                setFadeEnabled(true);
+                setFadeOffset(500);
             }});
         }});
 
