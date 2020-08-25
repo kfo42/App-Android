@@ -1,13 +1,9 @@
 package team.tangible.app.services;
 
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.concurrent.Callable;
-
-import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.SingleSource;
-import io.reactivex.functions.Function;
 import team.tangible.app.services.models.RoomDocument;
 import team.tangible.app.services.models.User;
 import team.tangible.app.services.models.UserDocument;
@@ -29,7 +25,15 @@ public class TangibleDataService {
                     .document(user.userUid)
                     .get()
                     .addOnSuccessListener(documentSnapshot -> {
-                        UserDocument userDocument = documentSnapshot.toObject(UserDocument.class);
+                        DocumentReference roomReference = documentSnapshot.getDocumentReference("room");
+
+                        if (roomReference == null) {
+                            emitter.onError(new NullPointerException("room reference is null"));
+                            return;
+                        }
+
+                        String roomId = roomReference.getId();
+                        UserDocument userDocument = new UserDocument(roomId);
                         emitter.onSuccess(userDocument);
                     })
                     .addOnFailureListener(exception -> {
@@ -57,6 +61,6 @@ public class TangibleDataService {
 
 
     public Single<RoomDocument> getCurrentUserRoom() {
-        return getCurrentUserDocument().flatMap(userDocument -> getRoom(userDocument.room.getId()));
+        return getCurrentUserDocument().flatMap(userDocument -> getRoom(userDocument.roomId));
     }
 }

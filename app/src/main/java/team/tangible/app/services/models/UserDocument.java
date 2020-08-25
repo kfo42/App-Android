@@ -1,7 +1,9 @@
 package team.tangible.app.services.models;
 
-import com.google.firebase.firestore.DocumentReference;
-
 public class UserDocument {
-    public DocumentReference room;
+    public String roomId;
+
+    public UserDocument(String roomId) {
+        this.roomId = roomId;
+    }
 }
