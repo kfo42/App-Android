@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.polidea.rxandroidble2.RxBleClient;
 
 import javax.inject.Named;
@@ -16,6 +17,7 @@ import team.tangible.app.Constants;
 import team.tangible.app.services.AuthenticationService;
 import team.tangible.app.services.SocialTouchInteractionService;
 import team.tangible.app.services.TangibleBleConnectionService;
+import team.tangible.app.services.TangibleDataService;
 
 
 /**
@@ -98,5 +100,15 @@ public class TangibleApplicationModule {
     @Provides
     public SocialTouchInteractionService provideSocialTouchInteractionService(Context context) {
         return new SocialTouchInteractionService(context);
+    }
+
+    @Provides
+    public FirebaseFirestore provideFirebaseFirestore() {
+        return FirebaseFirestore.getInstance();
+    }
+
+    @Provides
+    public TangibleDataService provideTangibleDataService(FirebaseFirestore firebaseFirestore, AuthenticationService authenticationService) {
+        return new TangibleDataService(firebaseFirestore, authenticationService);
     }
 }

@@ -21,6 +21,7 @@ import team.tangible.app.R;
 import team.tangible.app.TangibleApplication;
 import team.tangible.app.services.SocialTouchInteractionService;
 import team.tangible.app.services.TangibleBleConnectionService;
+import team.tangible.app.services.TangibleDataService;
 import team.tangible.app.utils.ActivityUtils;
 import team.tangible.app.utils.URLUtils;
 import timber.log.Timber;
@@ -53,6 +54,9 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
     TangibleBleConnectionService mTangibleBleConnectionService;
 
     @Inject
+    TangibleDataService mTangibleDataService;
+
+    @Inject
     @Named(Constants.Threading.MAIN_THREAD)
     Handler mMainThreadHandler;
 
@@ -70,15 +74,6 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
             setId(View.generateViewId());
             addView(mJitsiMeetView = new JitsiMeetView(context) {{
                 setId(View.generateViewId());
-                JitsiMeetConferenceOptions options = new JitsiMeetConferenceOptions.Builder()
-                        .setServerURL(URLUtils.parse("https://meet.jit.si"))
-                        .setRoom("pramod-katie-testing-demo")
-                        .setAudioMuted(false)
-                        .setVideoMuted(false)
-                        .setAudioOnly(false)
-                        .setWelcomePageEnabled(false)
-                        .build();
-                join(options);
             }});
             addView(mGestureOverlayView = new GestureOverlayView(context) {{
                 setId(View.generateViewId());
@@ -118,6 +113,26 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
             mMainThreadHandler.post(() -> mRxBleConnectionLiveData.setValue(rxBleConnection));
         }, throwable -> {
             Timber.e(throwable);
+        }));
+
+        mDisposables.add(mTangibleDataService.getCurrentUserDocument().subscribe(userDocument -> {
+            mDisposables.add(mTangibleDataService.getRoom(userDocument.room.getId()).subscribe(roomDocument -> {
+                runOnUiThread(() -> {
+                    JitsiMeetConferenceOptions options = new JitsiMeetConferenceOptions.Builder()
+                            .setServerURL(URLUtils.parse("https://meet.jit.si"))
+                            .setRoom(roomDocument.jitsiRoom)
+                            .setAudioMuted(false)
+                            .setVideoMuted(false)
+                            .setAudioOnly(false)
+                            .setWelcomePageEnabled(false)
+                            .build();
+                    join(options);
+                });
+            }, throwable -> {
+
+            }));
+        }, throwable -> {
+
         }));
     }
 
