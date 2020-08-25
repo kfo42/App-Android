@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.polidea.rxandroidble2.RxBleConnection;
 
@@ -64,7 +65,7 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_homescreen);
-        
+
         RelativeLayout relativeLayout = findViewById(R.id.activity_homescreen);
         Context context = relativeLayout.getContext();
 
@@ -110,30 +111,42 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
         mDisposables = new CompositeDisposable();
 
         mDisposables.add(mTangibleBleConnectionService.getConnection().subscribe(rxBleConnection -> {
+            Timber.i("Successfully aquired BLE connection");
+
             mMainThreadHandler.post(() -> mRxBleConnectionLiveData.setValue(rxBleConnection));
+
         }, throwable -> {
             Timber.e(throwable);
+
+            runOnUiThread(() -> {
+                Toast.makeText(HomescreenActivity.this, throwable.getMessage(), Toast.LENGTH_LONG).show();
+            });
+
         }));
 
-        mDisposables.add(mTangibleDataService.getCurrentUserDocument().subscribe(userDocument -> {
-            mDisposables.add(mTangibleDataService.getRoom(userDocument.room.getId()).subscribe(roomDocument -> {
-                runOnUiThread(() -> {
-                    JitsiMeetConferenceOptions options = new JitsiMeetConferenceOptions.Builder()
-                            .setServerURL(URLUtils.parse("https://meet.jit.si"))
-                            .setRoom(roomDocument.jitsiRoom)
-                            .setAudioMuted(false)
-                            .setVideoMuted(false)
-                            .setAudioOnly(false)
-                            .setWelcomePageEnabled(false)
-                            .build();
-                    join(options);
-                });
-            }, throwable -> {
+        mDisposables.add(mTangibleDataService.getCurrentUserRoom().subscribe(roomDocument -> {
+            Timber.i("Received jitsiRoom %s from data service", roomDocument.jitsiRoom);
 
-            }));
+            runOnUiThread(() -> {
+                mJitsiMeetView.join(new JitsiMeetConferenceOptions.Builder()
+                        .setServerURL(URLUtils.parse("https://meet.jit.si"))
+                        .setRoom(roomDocument.jitsiRoom)
+                        .setAudioMuted(false)
+                        .setVideoMuted(false)
+                        .setAudioOnly(false)
+                        .setWelcomePageEnabled(false)
+                        .build());
+            });
+
         }, throwable -> {
+            Timber.e(throwable);
+
+            runOnUiThread(() -> {
+                Toast.makeText(HomescreenActivity.this, throwable.getMessage(), Toast.LENGTH_LONG).show();
+            });
 
         }));
+
     }
 
     @Override
@@ -164,8 +177,13 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
     public void onInteraction(SocialTouchInteractionService.Interaction interaction) {
         Timber.i(interaction.getBleCode());
 
+        if (interaction == SocialTouchInteractionService.Interaction.UNKNOWN) {
+            return;
+        }
+
         mMainThreadHandler.post(() -> {
             RxBleConnection bleConnection = mRxBleConnectionLiveData.getValue();
+
             if (bleConnection == null) {
                 return;
             }
@@ -173,10 +191,16 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
             byte[] message = mTangibleBleConnectionService.getTangibleInteractionMessageWithCrc(interaction);
 
             mDisposables.add(bleConnection.writeCharacteristic(Characteristics.RX, message).subscribe(result -> {
-                Timber.i(new String(result));
+
+                Timber.i("Received ack from BLE device for message %s", new String(result));
+
             }, throwable -> {
-                throwable.printStackTrace();
+
                 Timber.e(throwable);
+
+                runOnUiThread(() -> {
+                    Toast.makeText(HomescreenActivity.this, throwable.getMessage(), Toast.LENGTH_LONG).show();
+                });
             }));
         });
     }

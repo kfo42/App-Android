@@ -2,7 +2,12 @@ package team.tangible.app.services;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.concurrent.Callable;
+
+import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.SingleSource;
+import io.reactivex.functions.Function;
 import team.tangible.app.services.models.RoomDocument;
 import team.tangible.app.services.models.User;
 import team.tangible.app.services.models.UserDocument;
@@ -34,10 +39,10 @@ public class TangibleDataService {
         });
     }
 
-    public Single<RoomDocument> getRoom(String room) {
+    public Single<RoomDocument> getRoom(String roomId) {
         return Single.create(emitter -> {
             mFirebaseFirestore.collection("rooms")
-                    .document(room)
+                    .document(roomId)
                     .get()
                     .addOnSuccessListener(documentSnapshot -> {
                         RoomDocument roomDocument = documentSnapshot.toObject(RoomDocument.class);
@@ -48,5 +53,10 @@ public class TangibleDataService {
                         emitter.onError(exception);
                     });
         });
+    }
+
+
+    public Single<RoomDocument> getCurrentUserRoom() {
+        return getCurrentUserDocument().flatMap(userDocument -> getRoom(userDocument.room.getId()));
     }
 }
