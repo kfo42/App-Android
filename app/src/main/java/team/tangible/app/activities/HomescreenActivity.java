@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.polidea.rxandroidble2.RxBleConnection;
 
@@ -21,6 +22,7 @@ import team.tangible.app.R;
 import team.tangible.app.TangibleApplication;
 import team.tangible.app.services.SocialTouchInteractionService;
 import team.tangible.app.services.TangibleBleConnectionService;
+import team.tangible.app.services.TangibleDataService;
 import team.tangible.app.utils.ActivityUtils;
 import team.tangible.app.utils.URLUtils;
 import timber.log.Timber;
@@ -53,6 +55,9 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
     TangibleBleConnectionService mTangibleBleConnectionService;
 
     @Inject
+    TangibleDataService mTangibleDataService;
+
+    @Inject
     @Named(Constants.Threading.MAIN_THREAD)
     Handler mMainThreadHandler;
 
@@ -70,15 +75,6 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
             setId(View.generateViewId());
             addView(mJitsiMeetView = new JitsiMeetView(context) {{
                 setId(View.generateViewId());
-                JitsiMeetConferenceOptions options = new JitsiMeetConferenceOptions.Builder()
-                        .setServerURL(URLUtils.parse("https://meet.jit.si"))
-                        .setRoom("pramod-katie-testing-demo")
-                        .setAudioMuted(false)
-                        .setVideoMuted(false)
-                        .setAudioOnly(false)
-                        .setWelcomePageEnabled(false)
-                        .build();
-                join(options);
             }});
             addView(mGestureOverlayView = new GestureOverlayView(context) {{
                 setId(View.generateViewId());
@@ -98,9 +94,9 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
             // relative to the height of the controls on the Jitsi view
             mJitsiMeetView.setLayoutParams(new FrameLayout.LayoutParams(
                     /* width: */ FrameLayout.LayoutParams.MATCH_PARENT,
-                    /* height: */ ViewGroup.LayoutParams.MATCH_PARENT));
+                    /* height: */ FrameLayout.LayoutParams.MATCH_PARENT));
             mGestureOverlayView.setLayoutParams(new FrameLayout.LayoutParams(
-                    /* width: */ ViewGroup.LayoutParams.MATCH_PARENT,
+                    /* width: */ FrameLayout.LayoutParams.MATCH_PARENT,
                     /* height: */ relativeLayout.getHeight() - JITSI_CONTROLS_HEIGHT_PX));
         });
 
@@ -117,9 +113,40 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
         mDisposables = new CompositeDisposable();
 
         mDisposables.add(mTangibleBleConnectionService.getConnection().subscribe(rxBleConnection -> {
+            Timber.i("Successfully acquired BLE connection");
+
             mMainThreadHandler.post(() -> mRxBleConnectionLiveData.setValue(rxBleConnection));
+
         }, throwable -> {
             Timber.e(throwable);
+
+            runOnUiThread(() -> {
+                Toast.makeText(HomescreenActivity.this, throwable.getMessage(), Toast.LENGTH_LONG).show();
+            });
+
+        }));
+
+        mDisposables.add(mTangibleDataService.getCurrentUserRoom().subscribe(dataRecord -> {
+            Timber.i("Received jitsiRoom %s from data service", dataRecord.getData().getJitsiRoom());
+
+            runOnUiThread(() -> {
+                mJitsiMeetView.join(new JitsiMeetConferenceOptions.Builder()
+                        .setServerURL(URLUtils.parse("https://meet.jit.si"))
+                        .setRoom(dataRecord.getData().getJitsiRoom())
+                        .setAudioMuted(false)
+                        .setVideoMuted(false)
+                        .setAudioOnly(false)
+                        .setWelcomePageEnabled(false)
+                        .build());
+            });
+
+        }, throwable -> {
+            Timber.e(throwable);
+
+            runOnUiThread(() -> {
+                Toast.makeText(HomescreenActivity.this, throwable.getMessage(), Toast.LENGTH_LONG).show();
+            });
+
         }));
     }
 
@@ -151,9 +178,10 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
     public void onInteraction(SocialTouchInteractionService.Interaction interaction) {
         Timber.i(interaction.getBleCode());
 
-        if(interaction == SocialTouchInteractionService.Interaction.DOUBLE_BACK_LEFT){
-            
+        if (interaction == SocialTouchInteractionService.Interaction.UNKNOWN) {
+            return;
         }
+
         mMainThreadHandler.post(() -> {
             RxBleConnection bleConnection = mRxBleConnectionLiveData.getValue();
             if (bleConnection == null) {
@@ -163,10 +191,16 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
             byte[] message = mTangibleBleConnectionService.getTangibleInteractionMessageWithCrc(interaction);
 
             mDisposables.add(bleConnection.writeCharacteristic(Characteristics.RX, message).subscribe(result -> {
-                Timber.i(new String(result));
+
+                Timber.i("Received ack from BLE device for message %s", new String(result));
+
             }, throwable -> {
-                throwable.printStackTrace();
+
                 Timber.e(throwable);
+
+                runOnUiThread(() -> {
+                    Toast.makeText(HomescreenActivity.this, throwable.getMessage(), Toast.LENGTH_LONG).show();
+                });
             }));
         });
     }

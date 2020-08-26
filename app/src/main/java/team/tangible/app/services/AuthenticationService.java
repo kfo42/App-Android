@@ -1,11 +1,9 @@
 package team.tangible.app.services;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
-import io.reactivex.Single;
-import team.tangible.app.results.LoginResult;
-
-import static team.tangible.app.results.LoginResult.*;
+import team.tangible.app.services.models.User;
 
 public class AuthenticationService {
     private final FirebaseAuth mFirebaseAuth;
@@ -14,7 +12,23 @@ public class AuthenticationService {
         mFirebaseAuth = firebaseAuth;
     }
 
-    public Single<LoginResult> isUserLoggedIn() {
-        return Single.just(mFirebaseAuth.getCurrentUser() != null ? SUCCESS : FAILURE);
+    public boolean isUserLoggedIn() {
+        return getFirebaseUser() != null;
     }
+
+    private FirebaseUser getFirebaseUser() {
+        return mFirebaseAuth.getCurrentUser();
+    }
+
+    public User getUser() {
+        if (!isUserLoggedIn()) {
+            throw new AuthenticationError();
+        }
+
+        FirebaseUser firebaseUser = getFirebaseUser();
+
+        return new User(firebaseUser.getEmail(), firebaseUser.getUid());
+    }
+
+    public static class AuthenticationError extends Error {}
 }

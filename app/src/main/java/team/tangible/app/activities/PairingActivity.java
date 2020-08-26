@@ -39,7 +39,6 @@ import team.tangible.app.BuildConfig;
 import team.tangible.app.Constants;
 import team.tangible.app.R;
 import team.tangible.app.TangibleApplication;
-import team.tangible.app.results.LoginResult;
 import team.tangible.app.results.TangibleAvailabilityResult;
 import team.tangible.app.services.AuthenticationService;
 import team.tangible.app.services.TangibleBleConnectionService;
@@ -294,26 +293,24 @@ public class PairingActivity extends AppCompatActivity {
                 return;
             }
 
-            mDisposables.add(mAuthenticationService.isUserLoggedIn().subscribe(result -> {
-                if (result == LoginResult.SUCCESS) {
-                    // Then move to the Homescreen! We're done with all the setup
-                    startActivity(new Intent(PairingActivity.this, HomescreenActivity.class));
-                    finish();
-                } else {
-                    // User isn't logged in so log them in
-                    Timber.w("User is not logged in. Moving to Firebase Auth UI");
+            if (mAuthenticationService.isUserLoggedIn()) {
+                // Then move to the Homescreen! We're done with all the setup
+                startActivity(new Intent(PairingActivity.this, HomescreenActivity.class));
+                finish();
+            } else {
+                // User isn't logged in so log them in
+                Timber.w("User is not logged in. Moving to Firebase Auth UI");
 
-                    // If they are not signed in (the user is null), then start the sign in UI
-                    mMainThreadHandler.postDelayed(() -> {
+                // If they are not signed in (the user is null), then start the sign in UI
+                mMainThreadHandler.postDelayed(() -> {
 
-                        Toast.makeText(PairingActivity.this, "Let's get you signed in...", Toast.LENGTH_LONG).show();
+                    Toast.makeText(PairingActivity.this, "Let's get you signed in...", Toast.LENGTH_LONG).show();
 
-                        // Create and launch sign-in intent
-                        startActivityForResult(FIREBASE_AUTH_UI_INTENT, RC_SIGN_IN);
+                    // Create and launch sign-in intent
+                    startActivityForResult(FIREBASE_AUTH_UI_INTENT, RC_SIGN_IN);
 
-                    }, TOAST_LENGTH_LONG_MS);
-                }
-            }));
+                }, TOAST_LENGTH_LONG_MS);
+            }
         }
     }
 

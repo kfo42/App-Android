@@ -21,7 +21,6 @@ import team.tangible.app.BuildConfig;
 import team.tangible.app.Constants;
 import team.tangible.app.R;
 import team.tangible.app.TangibleApplication;
-import team.tangible.app.results.LoginResult;
 import team.tangible.app.results.TangibleAvailabilityResult;
 import team.tangible.app.services.AuthenticationService;
 import team.tangible.app.services.TangibleBleConnectionService;
@@ -36,8 +35,8 @@ public class SplashActivity extends AppCompatActivity {
 
     private MutableLiveData<TangibleAvailabilityResult> mIsUserPairedWithTangibleLiveData =
             new MutableLiveData<>(TangibleAvailabilityResult.PENDING);
-    private MutableLiveData<LoginResult> mIsUserLoggedInLiveData =
-            new MutableLiveData<>(LoginResult.PENDING);
+    private MutableLiveData<Boolean> mIsUserLoggedInLiveData =
+            new MutableLiveData<>(null);
 
     private Disposable mSubscriptionDisposable;
 
@@ -85,9 +84,7 @@ public class SplashActivity extends AppCompatActivity {
         }));
 
         // Check if the user is logged in
-        mDisposables.add(mAuthenticationService.isUserLoggedIn().subscribe(result -> {
-           mMainThreadHandler.post(() -> mIsUserLoggedInLiveData.postValue(result));
-        }));
+       mMainThreadHandler.post(() -> mIsUserLoggedInLiveData.postValue(mAuthenticationService.isUserLoggedIn()));
     }
 
     @Override
@@ -151,10 +148,10 @@ public class SplashActivity extends AppCompatActivity {
     private void onLiveDataChanged() {
         // If the user is not paired with their Tangible, get them paired first
         TangibleAvailabilityResult isTangibleAvailable = mIsUserPairedWithTangibleLiveData.getValue();
-        LoginResult isUserLoggedIn = mIsUserLoggedInLiveData.getValue();
+        Boolean isUserLoggedIn = mIsUserLoggedInLiveData.getValue();
 
         // If the results are pending, then wait for another change
-        if (isUserLoggedIn == LoginResult.PENDING || isTangibleAvailable == TangibleAvailabilityResult.PENDING) {
+        if (isUserLoggedIn == null || isTangibleAvailable == TangibleAvailabilityResult.PENDING) {
             return;
         }
 
@@ -169,14 +166,10 @@ public class SplashActivity extends AppCompatActivity {
             throw new AssertionError("Assertion failed");
         }
 
-        if (isUserLoggedIn == LoginResult.SUCCESS) {
+        if (isUserLoggedIn) {
             // We can go to the Homescreen
             moveTo(HomescreenActivity.class);
             return;
-        }
-
-        if (BuildConfig.DEBUG && isUserLoggedIn != LoginResult.FAILURE) {
-            throw new AssertionError("Assertion failed");
         }
 
         // If they are not signed in, then start the sign in UI
