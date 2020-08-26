@@ -92,9 +92,9 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
             // relative to the height of the controls on the Jitsi view
             mJitsiMeetView.setLayoutParams(new FrameLayout.LayoutParams(
                     /* width: */ FrameLayout.LayoutParams.MATCH_PARENT,
-                    /* height: */ ViewGroup.LayoutParams.MATCH_PARENT));
+                    /* height: */ FrameLayout.LayoutParams.MATCH_PARENT));
             mGestureOverlayView.setLayoutParams(new FrameLayout.LayoutParams(
-                    /* width: */ ViewGroup.LayoutParams.MATCH_PARENT,
+                    /* width: */ FrameLayout.LayoutParams.MATCH_PARENT,
                     /* height: */ relativeLayout.getHeight() - JITSI_CONTROLS_HEIGHT_PX));
         });
 
