@@ -124,13 +124,13 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
 
         }));
 
-        mDisposables.add(mTangibleDataService.getCurrentUserRoom().subscribe(roomDocument -> {
-            Timber.i("Received jitsiRoom %s from data service", roomDocument.jitsiRoom);
+        mDisposables.add(mTangibleDataService.getCurrentUserRoom().subscribe(dataRecord -> {
+            Timber.i("Received jitsiRoom %s from data service", dataRecord.getData().getJitsiRoom());
 
             runOnUiThread(() -> {
                 mJitsiMeetView.join(new JitsiMeetConferenceOptions.Builder()
                         .setServerURL(URLUtils.parse("https://meet.jit.si"))
-                        .setRoom(roomDocument.jitsiRoom)
+                        .setRoom(dataRecord.getData().getJitsiRoom())
                         .setAudioMuted(false)
                         .setVideoMuted(false)
                         .setAudioOnly(false)

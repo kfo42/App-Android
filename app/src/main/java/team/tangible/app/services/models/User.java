@@ -1,11 +1,19 @@
 package team.tangible.app.services.models;
 
 public class User {
-    public final String identifier;
-    public final String userUid;
+    private final String mIdentifier;
+    private final String mUserUid;
 
     public User(String identifier, String userUid) {
-        this.identifier = identifier;
-        this.userUid = userUid;
+        this.mIdentifier = identifier;
+        this.mUserUid = userUid;
+    }
+
+    public String getIdentifier() {
+        return mIdentifier;
+    }
+
+    public String getUserUid() {
+        return mUserUid;
     }
 }

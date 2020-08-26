@@ -1,9 +1,13 @@
 package team.tangible.app.services.models;
 
 public class UserDocument {
-    public String roomId;
+    private String mRoomId;
 
     public UserDocument(String roomId) {
-        this.roomId = roomId;
+        this.mRoomId = roomId;
+    }
+
+    public String getRoomId() {
+        return mRoomId;
     }
 }
