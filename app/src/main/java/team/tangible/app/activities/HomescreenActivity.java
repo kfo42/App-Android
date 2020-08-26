@@ -65,7 +65,7 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_homescreen);
-
+        
         RelativeLayout relativeLayout = findViewById(R.id.activity_homescreen);
         Context context = relativeLayout.getContext();
 
@@ -82,8 +82,10 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
                 setEventsInterceptionEnabled(true);
                 setOrientation(ORIENTATION_VERTICAL);
                 setUncertainGestureColor(context.getColor(R.color.design_default_color_primary));
-                setGestureColor(context.getColor(R.color.design_default_color_secondary));
+                setGestureColor(context.getColor(R.color.design_default_color_background));
                 setOnTouchListener(HomescreenActivity.this);
+                setFadeEnabled(true);
+                setFadeOffset(500);
             }});
         }});
 
@@ -111,7 +113,7 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
         mDisposables = new CompositeDisposable();
 
         mDisposables.add(mTangibleBleConnectionService.getConnection().subscribe(rxBleConnection -> {
-            Timber.i("Successfully aquired BLE connection");
+            Timber.i("Successfully acquired BLE connection");
 
             mMainThreadHandler.post(() -> mRxBleConnectionLiveData.setValue(rxBleConnection));
 
@@ -146,7 +148,6 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
             });
 
         }));
-
     }
 
     @Override
@@ -183,7 +184,6 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
 
         mMainThreadHandler.post(() -> {
             RxBleConnection bleConnection = mRxBleConnectionLiveData.getValue();
-
             if (bleConnection == null) {
                 return;
             }

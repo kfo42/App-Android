@@ -1,6 +1,9 @@
-name: Android APK Build Push
+name: Android APK Build and Upload on Push to Master
 
-on: [ push ]
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   apk:
@@ -13,7 +16,7 @@ jobs:
 
       - name: Build Release APK
         run: ./gradlew assemble --stacktrace
-
+        
       - name: Upload APK
         uses: actions/upload-artifact@v1
         with:
