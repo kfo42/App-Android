@@ -30,14 +30,6 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
         FLING_LEFT("FLLT"),
         FLING_RIGHT("FLRT"),
 
-        /* SINGLE TAP */
-        SINGLE_BACK_RIGHT("BR"),
-        SINGLE_TOP_RIGHT("TR"),
-        SINGLE_FRONT_RIGHT("FR"),
-        SINGLE_BACK_LEFT("BL"),
-        SINGLE_TOP_LEFT("TL"),
-        SINGLE_FRONT_LEFT("FL"),
-
         /* DOUBLE TAP */
         DOUBLE_BACK_RIGHT("DTBR"),
         DOUBLE_TOP_RIGHT("DTTR"),
@@ -102,37 +94,6 @@ public class SocialTouchInteractionService extends GestureDetector.SimpleOnGestu
 
         mOnInteractionListener.onInteraction(interaction);
 
-        return true;
-    }
-
-    @Override
-    public boolean onSingleTapConfirmed(MotionEvent e) {
-
-        float x = e.getX();
-        float y = e.getY();
-        float width = mDisplayMetrics.widthPixels;
-        float height = mDisplayMetrics.heightPixels;
-        Actuator actuator = getActuator(x, y, width, height);
-        Interaction interaction;
-
-        if (actuator == Actuator.BACK_RIGHT) {
-            interaction = Interaction.SINGLE_BACK_RIGHT;
-        } else if (actuator == Actuator.TOP_RIGHT) {
-            interaction = Interaction.SINGLE_TOP_RIGHT;
-        } else if (actuator == Actuator.FRONT_RIGHT) {
-            interaction = Interaction.SINGLE_FRONT_RIGHT;
-        } else if (actuator == Actuator.BACK_LEFT) {
-            interaction = Interaction.SINGLE_BACK_LEFT;
-        } else if (actuator == Actuator.TOP_LEFT) {
-            interaction = Interaction.SINGLE_TOP_LEFT;
-        } else if (actuator == Actuator.FRONT_LEFT) {
-            interaction = Interaction.SINGLE_FRONT_LEFT;
-        } else{
-            interaction = Interaction.UNKNOWN;
-            return false;
-        }
-
-        mOnInteractionListener.onInteraction(interaction);
         return true;
     }
 
