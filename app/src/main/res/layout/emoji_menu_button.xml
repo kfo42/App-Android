@@ -1,0 +1,7 @@
+<com.amrdeveloper.reactbutton.ReactButton android:id="@+id/emoji_menu_button"
+    android:layout_height="10dp"
+    android:layout_width="10dp"
+    android:text="Emoji"
+    android:adjustViewBounds="true"
+    android:scaleType="fitXY"
+    xmlns:android="http://schemas.android.com/apk/res/android" />

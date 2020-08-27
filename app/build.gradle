@@ -98,4 +98,13 @@ dependencies {
 
     testImplementation 'com.github.fabioCollini.daggermock:daggermock:0.8.4'
     androidTestImplementation 'com.github.fabioCollini.daggermock:daggermock:0.8.4'
+
+    // ********
+    // REACTBUTTON FOR EMOJI MENU
+    // ********
+
+    implementation 'com.github.AmrDeveloper.ReactButton:reactbutton:1.0.7'
+
 }
+
+

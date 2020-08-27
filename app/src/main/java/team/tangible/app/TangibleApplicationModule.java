@@ -15,6 +15,7 @@ import dagger.Module;
 import dagger.Provides;
 import team.tangible.app.Constants;
 import team.tangible.app.services.AuthenticationService;
+import team.tangible.app.services.EmojiService;
 import team.tangible.app.services.SocialTouchInteractionService;
 import team.tangible.app.services.TangibleBleConnectionService;
 import team.tangible.app.services.TangibleDataService;
@@ -88,7 +89,7 @@ public class TangibleApplicationModule {
     public TangibleBleConnectionService provideTangibleBleConnectionService(
             RxBleClient rxBleClient,
             @Named(Constants.SharedPreferences.TEAM_TANGIBLE_APP)
-            SharedPreferences sharedPreferences) {
+                    SharedPreferences sharedPreferences) {
         return new TangibleBleConnectionService(rxBleClient, sharedPreferences);
     }
 
@@ -110,5 +111,10 @@ public class TangibleApplicationModule {
     @Provides
     public TangibleDataService provideTangibleDataService(FirebaseFirestore firebaseFirestore, AuthenticationService authenticationService) {
         return new TangibleDataService(firebaseFirestore, authenticationService);
+    }
+
+    @Provides
+    public EmojiService provideEmojiService(Context context){
+        return new EmojiService(context);
     }
 }

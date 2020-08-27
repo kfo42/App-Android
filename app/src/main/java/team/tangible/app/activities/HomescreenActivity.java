@@ -5,15 +5,21 @@ import androidx.lifecycle.MutableLiveData;
 
 import android.content.Context;
 import android.gesture.GestureOverlayView;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.amrdeveloper.reactbutton.ReactButton;
+import com.amrdeveloper.reactbutton.Reaction;
+
+import com.facebook.react.common.ReactConstants;
 import com.polidea.rxandroidble2.RxBleConnection;
 
 import io.reactivex.disposables.CompositeDisposable;
@@ -21,6 +27,7 @@ import team.tangible.app.Constants;
 import team.tangible.app.R;
 import team.tangible.app.TangibleApplication;
 import team.tangible.app.services.SocialTouchInteractionService;
+import team.tangible.app.services.EmojiService;
 import team.tangible.app.services.TangibleBleConnectionService;
 import team.tangible.app.services.TangibleDataService;
 import team.tangible.app.utils.ActivityUtils;
@@ -50,6 +57,9 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
 
     @Inject
     SocialTouchInteractionService mSocialTouchInteractionService;
+
+    @Inject
+    EmojiService mEmojiService;
 
     @Inject
     TangibleBleConnectionService mTangibleBleConnectionService;
@@ -102,8 +112,25 @@ public class HomescreenActivity extends JitsiMeetActivity implements View.OnTouc
 
         mDetector = new GestureDetectorCompat(this, mSocialTouchInteractionService);
         mDetector.setOnDoubleTapListener(mSocialTouchInteractionService);
-
         mSocialTouchInteractionService.setOnInteractionListener(this);
+
+        Reaction heartEyes = new Reaction("HEART EYES", "HEART EYES", "RED", R.drawable.heart_eyes);
+        Reaction heart = new Reaction("HEART", "HEART","RED",R.drawable.heart);
+        Reaction kiss = new Reaction("KISS", "KISS", "BLUE",R.drawable.kiss);
+        Reaction handWave = new Reaction("HAND WAVE", "HAND WAVE","BLUE",R.drawable.hand_wave);
+        Reaction giggle = new Reaction("GIGGLE", "GIGGLE","BLUE",R.drawable.giggle);
+        Reaction sad = new Reaction("ANGRY", "ANGRY", "RED",R.drawable.angry_face);
+        Reaction angry = new Reaction("SAD", "SAD","BLUE",R.drawable.sad_face);
+        Reaction crazyFace = new Reaction("CRAZY FACE", "CRAZY FACE","BLUE",R.drawable.crazy_face);
+        Reaction confetti = new Reaction("CONFETTI", "CONFETTI","BLUE",R.drawable.confetti);
+        Reaction star = new Reaction("STAR", "STAR","BLUE",R.drawable.star);
+
+        ReactButton emojiButton = new ReactButton(context);
+        emojiButton.setReactions(heartEyes, heart, kiss, handWave, giggle, confetti);
+        emojiButton.setDefaultReaction(heartEyes);
+        relativeLayout.addView(emojiButton);
+
+
     }
 
     @Override
